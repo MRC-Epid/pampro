@@ -8,10 +8,13 @@ Welcome to pampro's documentation!
 
 pampro is a software project for the systematic analysis of physical activity data collected in epidemiological studies. The ultimate goal is to provide a turn-key solution for physical activity data analysis, replicating published methodologies in a monitor-agnostic framework.
 
+Contents
+========
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-
+   
+   background/introduction
 
 
 Indices and tables
