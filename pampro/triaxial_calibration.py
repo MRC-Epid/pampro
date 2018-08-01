@@ -7,6 +7,7 @@ from scipy import stats
 import numpy as np
 from collections import OrderedDict
 import statsmodels.api as sm
+from sklearn import linear_model
 import pandas as pd
 
 from .Time_Series import *
@@ -63,6 +64,7 @@ def dataframe_regression(df, cal_mode, do_or_undo="do"):
 
         # if temperature is used in calibration
         if "temp" in cal_mode:
+
             x_results = sm.OLS(df.X_matched, df[["X", "intercept", "T_dev"]]).fit()
             y_results = sm.OLS(df.Y_matched, df[["Y", "intercept", "T_dev"]]).fit()
             z_results = sm.OLS(df.Z_matched, df[["Z", "intercept", "T_dev"]]).fit()
@@ -283,23 +285,20 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
     return (stillbouts_ts, calibration_diagnostics)
 
 
-def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, cal_method="best_fit"):
+def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
 
     still_x = stillbouts_ts["X_mean"]
     still_y = stillbouts_ts["Y_mean"]
     still_z = stillbouts_ts["Z_mean"]
     num_samples = stillbouts_ts["X_n"]
 
-    # if best fit of calibration is required
-    if cal_method == "best_fit":
-        # Ascertain if temperature data is present:
-        try:
-            still_temperature = stillbouts_ts["Temperature_mean"]
-        except:
-            still_temperature = None
-    # if temperature data is not to be used for calibration
-    elif cal_method == "force_no_temp":
+
+    # Ascertain if temperature data is present:
+    try:
+        still_temperature = stillbouts_ts["Temperature_mean"]
+    except:
         still_temperature = None
+
 
     # Get the octant positions of the points to calibrate on
     occupancy = octant_occupancy(still_x.data, still_y.data, still_z.data)
@@ -390,15 +389,16 @@ def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_f
     return (x, y, z, calibration_diagnostics)
 
 
-def do_calibration(x,y,z,t,cp):
+def do_calibration(x,y,z,temperature,cp):
     """
     Performs calibration on given channel using a given dictionary of parameters (cp)
      """
     # if temperature is used for calibration:
-    if t is not None:
-        x.data = cp["x_offset"] + (t.data * cp["x_temp_offset"]) + (x.data / cp["x_scale"])
-        y.data = cp["y_offset"] + (t.data * cp["y_temp_offset"]) + (y.data / cp["y_scale"])
-        z.data = cp["z_offset"] + (t.data * cp["z_temp_offset"]) + (z.data / cp["z_scale"])
+    if temperature is not None:
+
+        x.data = cp["x_offset"] + (temperature.data * cp["x_temp_offset"]) + (x.data * cp["x_scale"])
+        y.data = cp["y_offset"] + (temperature.data * cp["y_temp_offset"]) + (y.data * cp["y_scale"])
+        z.data = cp["z_offset"] + (temperature.data * cp["z_temp_offset"]) + (z.data * cp["z_scale"])
 
         x.temp_offset = cp["x_temp_offset"]
         y.temp_offset = cp["y_temp_offset"]
@@ -406,9 +406,9 @@ def do_calibration(x,y,z,t,cp):
 
     # if temperature is not used for calibration:
     else:
-        x.data = cp["x_offset"] + (x.data / cp["x_scale"])
-        y.data = cp["y_offset"] + (y.data / cp["y_scale"])
-        z.data = cp["z_offset"] + (z.data / cp["z_scale"])
+        x.data = cp["x_offset"] + (x.data * cp["x_scale"])
+        y.data = cp["y_offset"] + (y.data * cp["y_scale"])
+        z.data = cp["z_offset"] + (z.data * cp["z_scale"])
 
     x.offset = cp["x_offset"]
     x.scale = cp["x_scale"]
@@ -423,15 +423,15 @@ def do_calibration(x,y,z,t,cp):
     z.calibrated = True
 
 
-def undo_calibration(x,y,z,t,cp):
+def undo_calibration(x,y,z,temperature,cp):
     """
     Reverses calibration on given channel using a given dictionary of parameters (cp)
     """
 
-    if t is not None:
-        x.data = -cp["x_offset"] - (t.data * cp["x_temp_offset"]) + (x.data / cp["x_scale"])
-        y.data = -cp["y_offset"] - (t.data * cp["y_temp_offset"]) + (y.data / cp["y_scale"])
-        z.data = -cp["z_offset"] - (t.data * cp["z_temp_offset"]) + (z.data / cp["z_scale"])
+    if temperature is not None:
+        x.data = -cp["x_offset"] - (temperature.data * cp["x_temp_offset"]) + (x.data / cp["x_scale"])
+        y.data = -cp["y_offset"] - (temperature.data * cp["y_temp_offset"]) + (y.data / cp["y_scale"])
+        z.data = -cp["z_offset"] - (temperature.data * cp["z_temp_offset"]) + (z.data / cp["z_scale"])
 
     else:
         x.data = -cp["x_offset"] + (x.data / cp["x_scale"])
@@ -447,7 +447,7 @@ def undo_calibration_using_diagnostics(x,y,z,cd):
     """
     Convenience function that pulls the offset and scale values out of a regular calibration diagnostics dictionary.
     """
-    undo_calibration(x, y, z, [cd["x_offset"],cd["x_scale"],cd["y_offset"],cd["y_scale"],cd["z_offset"],cd["z_scale"]] )
+    undo_calibration(x, y, z, [cd["x_offset"],cd["x_scale"],cd["y_offset"],cd["y_scale"],cd["z_offset"],cd["z_scale"]])
 
 
 def evaluate_solution(still_x, still_y, still_z, still_n, calibration_parameters, still_temperature=None):
@@ -507,3 +507,4 @@ def octant_occupancy(x, y, z):
             pass
 
     return octants
+

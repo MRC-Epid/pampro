@@ -306,6 +306,9 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
     # We group them to indicate that they share a common set of timestamps to save storage
     for group_name, channels in groups:
 
+        # groups counter
+        group_number = 1
+
         group = f.create_group(group_name)
 
         first_channel = ts[channels[0]]
@@ -313,7 +316,8 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         data_length = len(first_channel.data)
         timestamp_length = len(timestamps)
 
-        if file_header is not None:
+        # set attributes for the first group only
+        if group_number == 1:
             for k, v in file_header.items():
                 if k is not "start_datetime_python":
                     group.attrs[k] = v
@@ -338,6 +342,9 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         if timestamp_length == data_length+1:
             offsets = offsets[:-1]
 
+        offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
+        offsets_dset[...] = offsets
+
         # Each channel's data array becomes a HDF5 dataset inside the group
         for channel_name in channels:
 
@@ -351,7 +358,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
                 if hasattr(channel, mc):
                     dset.attrs[mc] = getattr(channel, mc)
 
-        offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
-        offsets_dset[...] = offsets
+        # increase the groups counter
+        group_number += 1
 
     f.close()
