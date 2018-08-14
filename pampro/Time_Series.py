@@ -288,7 +288,7 @@ class Time_Series(object):
             plt.close("all")
 
 
-    def draw_hist(self, channel_combinations, file_target, noise_cutoff_mg, width=6.3, height=4.35):
+    def draw_hist(self, channel_combinations, file_target, x_axis_lowerlimit, x_axis_upperlimit, bins=500, width=6.3, height=4.35):
 
         try:
             rcParams['font.size'] = '8'
@@ -316,7 +316,7 @@ class Time_Series(object):
 
         axes = [fig.add_subplot(len(channel_combinations), 1, 1+index) for index in range(len(channel_combinations))]
 
-        axis_xlim = (0, ((1+noise_cutoff_mg)/1000))
+        axis_xlim = (x_axis_lowerlimit, x_axis_upperlimit)
 
         for channels, axis in zip(channel_combinations, axes):
 
@@ -327,7 +327,7 @@ class Time_Series(object):
 
                 data = channel.data
 
-                plt.hist(data, bins=500, histtype="stepfilled", density=True, label=channel.name, alpha=0.5)
+                plt.hist(data, bins=bins, histtype="stepfilled", density=True, label=channel.name, alpha=0.5)
 
             plt.legend()
             axis.grid()

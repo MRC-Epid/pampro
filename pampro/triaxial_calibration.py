@@ -7,7 +7,6 @@ from scipy import stats
 import numpy as np
 from collections import OrderedDict
 import statsmodels.api as sm
-from sklearn import linear_model
 import pandas as pd
 
 from .Time_Series import *
@@ -40,168 +39,6 @@ def is_calibrated(channel):
     return hasattr(channel, "calibrated") and channel.calibrated == True
 
 
-def nearest_sphere_surface(x_input, y_input, z_input):
-    """Given the 3D co-ordinates of a point, return the 3D co-ordinates of the point on the surface of a unit sphere. """
-
-    vm = math.sqrt(sum([x_input**2, y_input**2, z_input**2]))
-    return (x_input/vm, y_input/vm, z_input/vm)
-
-
-def dataframe_regression(df, cal_mode, do_or_undo="do"):
-    """Given a dataframe(df), perform liner regression on the columns required, according to the cal_mode variable.
-       "do_or_undo" variable determines the direction of the regression.
-
-       The required columns in the dataframe:
-       df.X_matched, df.Y_matched, df.Z_matched (the values of x,y,z matched to closest sphere surface point)
-       df.X_orig, df.Y_orig, df.Z_orig (the original values of x,y,z that are preserved)
-       df.X, df.Y, df.Z (the values of x,y,z that update after the regression)
-       df.intercept (column of ones to act as intercept)
-       df.T_dev (column of deviation in temperature from the optimal - ONLY USED IF cal_mode = "offset_scale_temp" or "offset_temp")
-    """
-
-    # perform linear regression to optimise to matched column
-    if do_or_undo == "do":
-
-        # if temperature is used in calibration
-        if "temp" in cal_mode:
-
-            x_results = sm.OLS(df.X_matched, df[["X", "intercept", "T_dev"]]).fit()
-            y_results = sm.OLS(df.Y_matched, df[["Y", "intercept", "T_dev"]]).fit()
-            z_results = sm.OLS(df.Z_matched, df[["Z", "intercept", "T_dev"]]).fit()
-        # if temperature NOT used in calibration
-        else:
-            x_results = sm.OLS(df.X_matched, df[["X", "intercept"]]).fit()
-            y_results = sm.OLS(df.Y_matched, df[["Y", "intercept"]]).fit()
-            z_results = sm.OLS(df.Z_matched, df[["Z", "intercept"]]).fit()
-
-
-    # perform linear regression to optimise the transformed x,y,z data back to the original x,y,z data
-    elif do_or_undo == "undo":
-
-        # if temperature was used in calibration
-        if "temp" in cal_mode:
-            x_results = sm.OLS(df["X"], df[["X_orig", "intercept", "T_dev"]]).fit()
-            y_results = sm.OLS(df["Y"], df[["Y_orig", "intercept", "T_dev"]]).fit()
-            z_results = sm.OLS(df["Z"], df[["Z_orig", "intercept", "T_dev"]]).fit()
-        # if temperature was NOT used in calibration
-        else:
-            x_results = sm.OLS(df["X"], df[["X_orig", "intercept"]]).fit()
-            y_results = sm.OLS(df["Y"], df[["Y_orig", "intercept"]]).fit()
-            z_results = sm.OLS(df["Z"], df[["Z_orig", "intercept"]]).fit()
-
-    return x_results, y_results, z_results
-
-
-def dataframe_transformation(df, x_results, y_results, z_results, cal_mode):
-    """Given the output from the function dataframe_regression() transform the columns df.X, df.Y, df.Z in a given dataframe, depending on the value of the cal_mode variable.
-
-    results.params() gives the calibration parameters thus:
-    x_results.params() = [x_scale, x_offset, x_temp_offset]   (last item only applies if temperature is used)"""
-
-    if cal_mode == "offset":
-        # Transform the input points using ONLY the offset co-efficient
-        # e.g. X(t) = X(t) + x_offset
-        df.X = df.X + x_results.params[1]
-        df.Y = df.Y + y_results.params[1]
-        df.Z = df.Z + z_results.params[1]
-
-    elif cal_mode == "offset_scale":
-        # Transform the input points using the regression co-efficients for offset and scale
-        # e.g. X(t) = (X(t)* x_scale) + x_offset
-        df.X = (df.X * x_results.params[0]) + x_results.params[1]
-        df.Y = (df.Y * y_results.params[0]) + y_results.params[1]
-        df.Z = (df.Z * z_results.params[0]) + z_results.params[1]
-
-    elif cal_mode == "offset_temp":
-        # Transform the input points using the regression co-efficients for offset and the temperature-scaled offset
-        # e.g. X(t) = (X(t) + x_offset + (T_dev(t)*temp_offset)
-        df.X = df.X + x_results.params[1] + (df.T_dev * x_results.params[2])
-        df.Y = df.Y + y_results.params[1] + (df.T_dev * y_results.params[2])
-        df.Z = df.Z + z_results.params[1] + (df.T_dev * z_results.params[2])
-
-    elif cal_mode == "offset_scale_temp":
-        # Transform the input points using the regression co-efficients for offset and scale and the temperature-scaled offset
-        # e.g. X(t) = (X(t)* x_scale) + x_offset + (T_dev(t)*temp_offset)
-        df.X = (df.X * x_results.params[0]) + x_results.params[1] + (df.T_dev * x_results.params[2])
-        df.Y = (df.Y * y_results.params[0]) + y_results.params[1] + (df.T_dev * y_results.params[2])
-        df.Z = (df.Z * z_results.params[0]) + z_results.params[1] + (df.T_dev * z_results.params[2])
-
-    return df
-
-
-def find_calibration_parameters(x_input, y_input, z_input, temperature, cal_mode, optimal_t = 25, num_iterations=1000):
-    """Find the offset and scaling factors for each 3D axis. Assumes the input vectors are only still points."""
-
-    # Need to keep a copy of the original input
-    x_input_copy = x_input[::]
-    y_input_copy = y_input[::]
-    z_input_copy = z_input[::]
-
-    # Need 3 blank arrays to populate
-    x_matched = np.empty(len(x_input))
-    y_matched = np.empty(len(y_input))
-    z_matched = np.empty(len(z_input))
-
-    df = pd.DataFrame()
-    df["X_orig"] = x_input_copy
-    df["Y_orig"] = y_input_copy
-    df["Z_orig"] = z_input_copy
-    df["X"] = x_input
-    df["Y"] = y_input
-    df["Z"] = z_input
-
-    df["intercept"] = 1
-
-    if "temp" in cal_mode:
-        # create a column of T - optimal_T (mean temperature for each still bout minus the optimal temperature) i.e. the deviation in T from the optimal
-        df["T_dev"] = temperature.data - optimal_t
-
-
-    for i in range(num_iterations):
-
-        for i,a,b,c in zip(range(len(x_input)),x_input, y_input, z_input):
-
-            # For each point, find its nearest point on the surface of a sphere
-            closest = nearest_sphere_surface(a,b,c)
-
-            # Put the result in the X,Y,Z arrays
-            x_matched[i] = closest[0]
-            y_matched[i] = closest[1]
-            z_matched[i] = closest[2]
-
-        # Add matched arrays to DataFrame
-        df["X_matched"] = x_matched
-        df["Y_matched"] = y_matched
-        df["Z_matched"] = z_matched
-
-  # Now that each X input is matched up against a "perfect" X on a sphere, do linear regression:
-        x_results, y_results, z_results = dataframe_regression(df, cal_mode, do_or_undo="do")
-
-        # results.params() gives the calibration parameters thus:
-        # x_results.params() = [x_scale, x_offset, x_temp_offset]   (last item only applies if temperature is used)
-
-        df = dataframe_transformation(df, x_results, y_results, z_results, cal_mode)
-
-    # Regress the backup copy of the original input against the transformed version,
-    # to calculate offset, scale and temperature offset scalar (if temperature used)
-    x_results_final, y_results_final, z_results_final = dataframe_regression(df, cal_mode, do_or_undo="undo")
-
-    calibration_parameters = {"x_offset": x_results_final.params[1],
-                              "x_scale": x_results_final.params[0],
-                              "y_offset": y_results_final.params[1],
-                              "y_scale": y_results_final.params[0],
-                              "z_offset": z_results_final.params[1],
-                              "z_scale": z_results_final.params[0]
-                              }
-
-    if "temp" in cal_mode:
-        calibration_parameters["x_temp_offset"] = x_results_final.params[2]
-        calibration_parameters["y_temp_offset"] = y_results_final.params[2]
-        calibration_parameters["z_temp_offset"] = z_results_final.params[2]
-
-    return calibration_parameters
-
-
 def calibrate_slave(x, y, z, budget=1000, noise_cutoff_mg=13):
     """
     Slave to calibrate()
@@ -212,6 +49,25 @@ def calibrate_slave(x, y, z, budget=1000, noise_cutoff_mg=13):
     calibration_diagnostics = calibrate_steptwo(stillbouts_ts, calibration_diagnostics)
 
     return calibration_diagnostics
+
+
+def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_file=None):
+    """ Use still bouts in the given triaxial data to calibrate it and return the calibrated channels """
+
+    args = {"x":x, "y":y, "z":z, "budget":budget, "noise_cutoff_mg":noise_cutoff_mg}
+    params = ["budget", "noise_cutoff_mg"]
+    calibration_diagnostics = do_if_not_cached("calibrate", calibrate_slave, args, params, get_calibrate, set_calibrate, hdf5_file)
+
+    # Regardless of how we get the results, extract the offset and scales
+    calibration_parameters = [calibration_diagnostics[var] for var in ["x_offset", "x_scale", "y_offset", "y_scale", "z_offset", "z_scale"]]
+
+    if temperature is not None:
+        calibration_parameters = [calibration_diagnostics[var] for var in ["x_temp_offset", "y_temp_offset", "z_temp_offset"]]
+
+    # Apply the best calibration factors to the data
+    do_calibration(x, y, z, temperature, calibration_parameters)
+
+    return (x, y, z, calibration_diagnostics)
 
 
 def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, noise_cutoff_mg=13):
@@ -287,17 +143,17 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
 
 def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
 
-    still_x = stillbouts_ts["X_mean"]
-    still_y = stillbouts_ts["Y_mean"]
-    still_z = stillbouts_ts["Z_mean"]
-    num_samples = stillbouts_ts["X_n"]
+    still_x, still_y, still_z, num_samples, still_temperature = still_bouts_from_ts(stillbouts_ts)
 
-
-    # Ascertain if temperature data is present:
-    try:
-        still_temperature = stillbouts_ts["Temperature_mean"]
-    except:
-        still_temperature = None
+    # calculate the standard deviation and 25th, 50th and 75th percentiles of observations for each axis:
+    percentiles = [("p25",25), ("p50",50), ("p75",75)]
+    axes = [("x",still_x.data), ("y",still_y.data), ("z",still_z.data)]
+    for axis,data in axes:
+        calibration_diagnostics[axis + "_upper_ratio"] = axis_distribution_ratio(data,0.3, upper_or_lower="upper")
+        calibration_diagnostics[axis + "_lower_lower"] = axis_distribution_ratio(data, -0.3, upper_or_lower="lower")
+        calibration_diagnostics[axis + "_std"] = np.std(data)
+        for name,value in percentiles:
+            calibration_diagnostics[axis + "_" + name] = np.percentile(data, value)
 
 
     # Get the octant positions of the points to calibrate on
@@ -305,10 +161,15 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
 
     # Are they fairly distributed?
     comparisons = {"x<0":[0,1,2,3], "x>0":[4,5,6,7], "y<0":[0,1,4,5], "y>0":[2,3,6,7], "z<0":[0,2,4,6], "z>0":[1,3,5,7]}
-    for axis in ["x", "y", "z"]:
+    '''for axis in ["x", "y", "z"]:
         mt = sum(occupancy[comparisons[axis + ">0"]])
         lt = sum(occupancy[comparisons[axis + "<0"]])
-        calibration_diagnostics[axis + "_inequality"] = abs(mt-lt)/sum(occupancy)
+        calibration_diagnostics[axis + "_inequality"] = abs(mt-lt)/sum(occupancy)'''
+
+
+    for i,occ in enumerate(occupancy):
+        calibration_diagnostics["octant_"+str(i)] = occ
+
 
     # Calculate the initial error without doing any calibration
     # i.e. set the parameters to an 'ideal'
@@ -324,7 +185,7 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
 
     start_error = evaluate_solution(still_x, still_y, still_z, num_samples, ideal_parameters)
 
-    # Set the calibration method:
+    # Search for the correct way to calibrate the data:
     #    offset = use offset factors only
     #    offset_scale = use offset and scale factors
     #    offset_temp = use offset and temperature offset
@@ -332,8 +193,8 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
 
     # If we have less than 500 points to calibrate with, or if more than 2 octants are empty we will not use scale:
     use_scale = True
-    if len(still_x.data) < 500 or sum(occupancy == 0) > 2:
-        use_scale = False
+    '''if len(still_x.data) < 500 or sum(occupancy == 0) > 2:
+        use_scale = False'''
 
     # Assign calibration method according to parameters 'use_scale' and 'still_temperature'
     if not use_scale and still_temperature is None:
@@ -352,53 +213,229 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
         cal_mode = "offset_scale_temp"
         calibration_diagnostics["calibration_method"] = "offset and scale with temperature"
 
-    # Search for the correct way to calibrate the data
-    calibration_parameters = find_calibration_parameters(still_x.data, still_y.data, still_z.data, still_temperature, cal_mode)
+    # Create a DataFrame containing the original x,y,z data and the x,y,z matched data:
+    df_original = create_original_and_matched(still_x, still_y, still_z)
+
+    calibration_parameters = find_calibration_parameters(df_original, still_x.data, still_y.data, still_z.data, still_temperature,
+                                            cal_mode)
 
     # update the calibration_diagnostics dictionary with the calibration parameters
     calibration_diagnostics.update(calibration_parameters)
-
-    for i,occ in enumerate(occupancy):
-        calibration_diagnostics["octant_"+str(i)] = occ
 
     # Calculate the final error after calibration
     end_error = evaluate_solution(still_x, still_y, still_z, num_samples, calibration_parameters, still_temperature)
 
     calibration_diagnostics["start_error"] = start_error
-    calibration_diagnostics["end_error"] = end_error
+    # define end error as 'global' as it is calculated using all the still data available
+    calibration_diagnostics["global_end_error"] = end_error
 
     return calibration_diagnostics
 
 
-def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_file=None):
-    """ Use still bouts in the given triaxial data to calibrate it and return the calibrated channels """
+def find_calibration_parameters(df_original, x_input, y_input, z_input, temperature, cal_mode, optimal_t = 25, num_iterations=1000):
+    """Find the offset and scaling factors for each 3D axis. Assumes the input vectors are only still points."""
 
-    args = {"x":x, "y":y, "z":z, "budget":budget, "noise_cutoff_mg":noise_cutoff_mg}
-    params = ["budget", "noise_cutoff_mg"]
-    calibration_diagnostics = do_if_not_cached("calibrate", calibrate_slave, args, params, get_calibrate, set_calibrate, hdf5_file)
+    # The DataFrame of original x,y,z data will be used as the basis of linear regression later on.
+    # Copy df_original, then add x,y,z inputs to the copy (df_current)
+    df_current = df_original.copy()
+    df_current["X"] = x_input
+    df_current["Y"] = y_input
+    df_current["Z"] = z_input
 
-    # Regardless of how we get the results, extract the offset and scales
-    calibration_parameters = [calibration_diagnostics[var] for var in ["x_offset", "x_scale", "y_offset", "y_scale", "z_offset", "z_scale"]]
-
-    if temperature is not None:
-        calibration_parameters = [calibration_diagnostics[var] for var in ["x_temp_offset", "y_temp_offset", "z_temp_offset"]]
-
-    # Apply the best calibration factors to the data
-    do_calibration(x, y, z, temperature, calibration_parameters)
-
-    return (x, y, z, calibration_diagnostics)
+    if "temp" in cal_mode:
+        # create a column of T - optimal_T (mean temperature for each still bout minus the optimal temperature) i.e. the deviation in T from the optimal
+        df_current["T_dev"] = temperature.data - optimal_t
 
 
-def do_calibration(x,y,z,temperature,cp):
+    for i in range(num_iterations):
+        #do linear regression:
+        x_results, y_results, z_results = dataframe_regression(df_current, cal_mode, do_or_undo="do")
+
+        # results.params() gives the calibration parameters thus:
+        # x_results.params() = [x_scale, x_offset, x_temp_offset]   (last item only applies if temperature is used)
+        df = dataframe_transformation(df_current, x_results.params, y_results.params, z_results.params, cal_mode)
+
+    # Regress the backup copy of the original input against the transformed version,
+    # to calculate offset, scale and temperature offset scalar (if temperature used)
+    x_results_final, y_results_final, z_results_final = dataframe_regression(df, cal_mode, do_or_undo="undo")
+
+    calibration_parameters = {"x_offset": x_results_final.params[1],
+                              "x_scale": x_results_final.params[0],
+                              "y_offset": y_results_final.params[1],
+                              "y_scale": y_results_final.params[0],
+                              "z_offset": z_results_final.params[1],
+                              "z_scale": z_results_final.params[0]
+                              }
+
+    if "temp" in cal_mode:
+        calibration_parameters["x_temp_offset"] = x_results_final.params[2]
+        calibration_parameters["y_temp_offset"] = y_results_final.params[2]
+        calibration_parameters["z_temp_offset"] = z_results_final.params[2]
+    else:
+        calibration_parameters["x_temp_offset"] = 0
+        calibration_parameters["y_temp_offset"] = 0
+        calibration_parameters["z_temp_offset"] = 0
+
+    # extract the error in the final regression fit for each axis
+    calibration_parameters["x_rsquared"] = x_results_final.rsquared
+    calibration_parameters["y_rsquared"] = y_results_final.rsquared
+    calibration_parameters["z_rsquared"] = z_results_final.rsquared
+
+    x_bse = x_results_final.bse
+    y_bse = y_results_final.bse
+    z_bse = z_results_final.bse
+
+    calibration_parameters["x_scale_se"] = x_bse[0]
+    calibration_parameters["y_scale_se"] = y_bse[0]
+    calibration_parameters["z_scale_se"] = z_bse[0]
+
+    calibration_parameters["x_offset_se"] = x_bse[1]
+    calibration_parameters["y_offset_se"] = y_bse[1]
+    calibration_parameters["z_offset_se"] = z_bse[1]
+
+    if "temp" in cal_mode:
+        calibration_parameters["x_temp_offset_se"] = x_bse[2]
+        calibration_parameters["y_temp_offset_se"] = y_bse[2]
+        calibration_parameters["z_temp_offset_se"] = z_bse[2]
+
+    return calibration_parameters
+
+
+def nearest_sphere_surface(x_input, y_input, z_input):
+    """Given the 3D co-ordinates of a point, return the 3D co-ordinates of the point on the surface of a unit sphere. """
+
+    vm = math.sqrt(sum([x_input**2, y_input**2, z_input**2]))
+    return (x_input/vm, y_input/vm, z_input/vm)
+
+
+def create_original_and_matched(x_input, y_input, z_input):
+    """Creates and returns a DataFrame containing the original x,y,z data and the x,y,z matched data and an intercept column of ones
+    (the nearest corresponding points on a perfect sphere)"""
+    df = pd.DataFrame({"X_orig": x_input.data,
+                                "Y_orig": y_input.data,
+                                "Z_orig": z_input.data})
+
+    # Need 3 blank arrays to populate
+    x_matched = np.empty(len(x_input.data))
+    y_matched = np.empty(len(y_input.data))
+    z_matched = np.empty(len(z_input.data))
+
+    for i,a,b,c in zip(range(len(x_input.data)),x_input.data, y_input.data, z_input.data):
+
+        # For each point, find its nearest point on the surface of a sphere
+        closest = nearest_sphere_surface(a,b,c)
+
+        # Put the result in the X,Y,Z arrays
+        x_matched[i] = closest[0]
+        y_matched[i] = closest[1]
+        z_matched[i] = closest[2]
+
+    # Add matched arrays to DataFrame
+    df["X_matched"] = x_matched
+    df["Y_matched"] = y_matched
+    df["Z_matched"] = z_matched
+
+    # Create an intercept row in order to find the offset factor
+    df["intercept"] = 1
+
+    return df
+
+
+def dataframe_regression(df, cal_mode, do_or_undo="do"):
+    """Given a dataframe(df), perform liner regression on the columns required, according to the cal_mode variable.
+       "do_or_undo" variable determines the direction of the regression.
+
+       The required columns in the dataframe:
+       df.X_matched, df.Y_matched, df.Z_matched (the values of x,y,z matched to closest sphere surface point)
+       df.X_orig, df.Y_orig, df.Z_orig (the original values of x,y,z that are preserved)
+       df.X, df.Y, df.Z (the values of x,y,z that update after the regression)
+       df.intercept (column of ones to act as intercept)
+       df.T_dev (column of deviation in temperature from the optimal - ONLY USED IF cal_mode = "offset_scale_temp" or "offset_temp")
+    """
+
+    # perform linear regression to optimise to matched column
+    if do_or_undo == "do":
+
+        # if temperature is used in calibration
+        if "temp" in cal_mode:
+
+            x_results = sm.OLS(df.X_matched, df[["X", "intercept", "T_dev"]]).fit()
+            y_results = sm.OLS(df.Y_matched, df[["Y", "intercept", "T_dev"]]).fit()
+            z_results = sm.OLS(df.Z_matched, df[["Z", "intercept", "T_dev"]]).fit()
+        # if temperature NOT used in calibration
+        else:
+            x_results = sm.OLS(df.X_matched, df[["X", "intercept"]]).fit()
+            y_results = sm.OLS(df.Y_matched, df[["Y", "intercept"]]).fit()
+            z_results = sm.OLS(df.Z_matched, df[["Z", "intercept"]]).fit()
+
+    # perform linear regression to optimise the transformed x,y,z data back to the original x,y,z data
+    elif do_or_undo == "undo":
+
+        # if temperature was used in calibration
+        if "temp" in cal_mode:
+            x_results = sm.OLS(df["X"], df[["X_orig", "intercept", "T_dev"]]).fit()
+            y_results = sm.OLS(df["Y"], df[["Y_orig", "intercept", "T_dev"]]).fit()
+            z_results = sm.OLS(df["Z"], df[["Z_orig", "intercept", "T_dev"]]).fit()
+        # if temperature was NOT used in calibration
+        else:
+            x_results = sm.OLS(df["X"], df[["X_orig", "intercept"]]).fit()
+            y_results = sm.OLS(df["Y"], df[["Y_orig", "intercept"]]).fit()
+            z_results = sm.OLS(df["Z"], df[["Z_orig", "intercept"]]).fit()
+
+    return x_results, y_results, z_results
+
+
+def dataframe_transformation(df, x_params, y_params, z_params, cal_mode):
+    """Given the output from the function dataframe_regression() transform the columns df.X, df.Y, df.Z in a given dataframe, depending on the value of the cal_mode variable.
+
+    results.params() gives the calibration parameters thus:
+    x_results.params() = [x_scale, x_offset, x_temp_offset]   (last item only applies if temperature is used)"""
+
+    if cal_mode == "offset":
+        # Transform the input points using ONLY the offset co-efficient
+        # e.g. X(t) = X(t) + x_offset
+        df.X = df.X + x_params[1]
+        df.Y = df.Y + y_params[1]
+        df.Z = df.Z + z_params[1]
+
+    elif cal_mode == "offset_scale":
+        # Transform the input points using the regression co-efficients for offset and scale
+        # e.g. X(t) = (X(t)* x_scale) + x_offset
+        df.X = (df.X * x_params[0]) + x_params[1]
+        df.Y = (df.Y * y_params[0]) + y_params[1]
+        df.Z = (df.Z * z_params[0]) + z_params[1]
+
+    elif cal_mode == "offset_temp":
+        # Transform the input points using the regression co-efficients for offset and the temperature-scaled offset
+        # e.g. X(t) = (X(t) + x_offset + (T_dev(t)*temp_offset)
+        df.X = df.X + x_params[1] + (df.T_dev * x_params[2])
+        df.Y = df.Y + y_params[1] + (df.T_dev * y_params[2])
+        df.Z = df.Z + z_params[1] + (df.T_dev * z_params[2])
+
+    elif cal_mode == "offset_scale_temp":
+        # Transform the input points using the regression co-efficients for offset and scale and the temperature-scaled offset
+        # e.g. X(t) = (X(t)* x_scale) + x_offset + (T_dev(t)*temp_offset)
+        df.X = (df.X * x_params[0]) + x_params[1] + (df.T_dev * x_params[2])
+        df.Y = (df.Y * y_params[0]) + y_params[1] + (df.T_dev * y_params[2])
+        df.Z = (df.Z * z_params[0]) + z_params[1] + (df.T_dev * z_params[2])
+
+    return df
+
+
+def do_calibration(x,y,z,temperature,cp, optimal_t = 25):
     """
     Performs calibration on given channel using a given dictionary of parameters (cp)
      """
     # if temperature is used for calibration:
     if temperature is not None:
+        # create an array of T - optimal_T (temperature minus the optimal temperature) i.e. the deviation in T from the optimum
+        temp_dev = np.empty(len(temperature.data))
+        for i in range(len(temperature.data)):
+            temp_dev[i] = temperature.data[i] - optimal_t
 
-        x.data = cp["x_offset"] + (temperature.data * cp["x_temp_offset"]) + (x.data * cp["x_scale"])
-        y.data = cp["y_offset"] + (temperature.data * cp["y_temp_offset"]) + (y.data * cp["y_scale"])
-        z.data = cp["z_offset"] + (temperature.data * cp["z_temp_offset"]) + (z.data * cp["z_scale"])
+        x.data = cp["x_offset"] + (temp_dev * cp["x_temp_offset"]) + (x.data * cp["x_scale"])
+        y.data = cp["y_offset"] + (temp_dev * cp["y_temp_offset"]) + (y.data * cp["y_scale"])
+        z.data = cp["z_offset"] + (temp_dev * cp["z_temp_offset"]) + (z.data * cp["z_scale"])
 
         x.temp_offset = cp["x_temp_offset"]
         y.temp_offset = cp["y_temp_offset"]
@@ -423,15 +460,21 @@ def do_calibration(x,y,z,temperature,cp):
     z.calibrated = True
 
 
-def undo_calibration(x,y,z,temperature,cp):
+def undo_calibration(x,y,z,temperature,cp, optimal_t = 25):
     """
     Reverses calibration on given channel using a given dictionary of parameters (cp)
     """
 
+    # if temperature is used for calibration:
     if temperature is not None:
-        x.data = -cp["x_offset"] - (temperature.data * cp["x_temp_offset"]) + (x.data / cp["x_scale"])
-        y.data = -cp["y_offset"] - (temperature.data * cp["y_temp_offset"]) + (y.data / cp["y_scale"])
-        z.data = -cp["z_offset"] - (temperature.data * cp["z_temp_offset"]) + (z.data / cp["z_scale"])
+        # create an array of T - optimal_T (temperature minus the optimal temperature) i.e. the deviation in T from the optimum
+        temp_dev = np.empty(len(temperature.data))
+        for i in range(len(temperature.data)):
+            temp_dev[i] = temperature.data[i] - optimal_t
+
+        x.data = -cp["x_offset"] - (temp_dev * cp["x_temp_offset"]) + (x.data / cp["x_scale"])
+        y.data = -cp["y_offset"] - (temp_dev * cp["y_temp_offset"]) + (y.data / cp["y_scale"])
+        z.data = -cp["z_offset"] - (temp_dev * cp["z_temp_offset"]) + (z.data / cp["z_scale"])
 
     else:
         x.data = -cp["x_offset"] + (x.data / cp["x_scale"])
@@ -452,12 +495,6 @@ def undo_calibration_using_diagnostics(x,y,z,cd):
 
 def evaluate_solution(still_x, still_y, still_z, still_n, calibration_parameters, still_temperature=None):
     """ Calculates the RMSE of the input XYZ signal if calibrated according to input calibration parameters"""
-
-    # if temperature not involved in calibration then set temperature offset scalar values to zero
-    if still_temperature is None:
-        calibration_parameters["x_temp_offset"] = 0
-        calibration_parameters["y_temp_offset"] = 0
-        calibration_parameters["z_temp_offset"] = 0
 
     # Temporarily adjust the channels of still data, which has collapsed x,y,z values
     do_calibration(still_x, still_y, still_z, still_temperature, calibration_parameters)
@@ -508,3 +545,37 @@ def octant_occupancy(x, y, z):
 
     return octants
 
+def axis_distribution_ratio(data, cutoff, upper_or_lower="upper"):
+    """Returns a ratio of the number of samples lying either above an upper cutoff value or lying below a lower cutoff as a proportion of the total"""
+
+    count = 0
+    if upper_or_lower == "upper":
+        for a in data:
+            if a > cutoff:
+                count += 1
+
+    elif upper_or_lower == "lower":
+        for a in data:
+            if a < cutoff:
+                count += 1
+
+    ratio = count/len(data)
+
+    return ratio
+
+
+def still_bouts_from_ts(stillbouts_ts):
+    """Extracts the still bouts data (including temperature is available) and returns channels of data"""
+
+    still_x = stillbouts_ts["X_mean"]
+    still_y = stillbouts_ts["Y_mean"]
+    still_z = stillbouts_ts["Z_mean"]
+    num_samples = stillbouts_ts["X_n"]
+
+    # Ascertain if temperature data is present:
+    try:
+        still_temperature = stillbouts_ts["Temperature_mean"]
+    except:
+        still_temperature = None
+
+    return still_x, still_y, still_z, num_samples, still_temperature
