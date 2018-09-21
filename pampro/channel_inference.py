@@ -2,6 +2,7 @@
 from datetime import timedelta
 import numpy as np
 import copy
+import math
 
 from .Channel import *
 from .Bout  import *
@@ -246,10 +247,67 @@ def infer_valid_days(channel, wear_bouts, valid_criterion=timedelta(hours=10)):
 
         # If the amount of overlap exceeds the valid criterion, it is valid
         if total >= valid_criterion:
-            #window.draw_properties={"lw":0, "facecolor":[1,0,0], "alpha":0.25}
+            # show valid day windows in orange
+            window.draw_properties = {"lw": 0, "facecolor": "#ffa03a", "alpha": 0.25}
             valid_windows.append(window)
         else:
             invalid_windows.append(window)
 
-
     return(invalid_windows, valid_windows)
+
+def bouts_exceeding_threshold(channel, threshold, minimum_length=timedelta(minutes=10)):
+    """
+    Find the bouts, exceeding minimum_length in length, in a channel during which the value of the data is greater than max_value
+
+    :param channel: data channel
+    :param threshold: the maximum value criteria
+    :param window_size: the minimum bout length, given as a timedelta
+    :return: list of bouts
+    """
+    # maximum int32 value
+    max_int = 2147483647
+
+    bouts_list = channel.bouts(low=threshold, high=max_int)
+
+    final_bouts = limit_to_lengths(bouts_list, min_length=minimum_length)
+
+    return final_bouts
+
+
+def infer_nonwear_for_qc(x, y, z, noise_cutoff_mg, minimum_length=timedelta(hours=1)):
+    """
+    Loosely infer when monitor was not being worn, based on QC page-level data
+    """
+
+    x_intersect_y_intersect_z = infer_still_bouts_triaxial(x, y, z, window_size=timedelta(minutes=2), noise_cutoff_mg=noise_cutoff_mg,
+                                                           minimum_length=timedelta(minutes=5))
+
+    # Restrict those bouts to only those with a length that exceeds the minimum length criterion
+    x_intersect_y_intersect_z = limit_to_lengths(x_intersect_y_intersect_z, min_length=minimum_length)
+
+    return x_intersect_y_intersect_z
+
+
+def create_quadrant_bouts(channel):
+    """
+    :param channel: channel to be examined
+    :return: a list of Bout objects, one for each quadrant
+
+    quadrant_0 = 00:00 -> 06:00
+    quadrant_1 = 06:00 -> 12:00
+    quadrant_2 = 12:00 -> 18:00
+    quadrant_3 = 18:00 -> 00:00
+    """
+
+    # define quadrant windows
+    q_0, q_1, q_2, q_3 = [],[],[],[]
+
+    start = start_of_day(channel.timestamps[0])
+    while start < channel.timeframe[1]:
+        q_0.append(Bout(start, start + timedelta(hours=6)))
+        q_1.append(Bout(start + timedelta(hours=6), start + timedelta(hours=12)))
+        q_2.append(Bout(start + timedelta(hours=12), start + timedelta(hours=18)))
+        q_3.append(Bout(start + timedelta(hours=18), start + timedelta(days=1)))
+        start += timedelta(days=1)
+
+    return (q_0, q_1, q_2, q_3)

@@ -9,74 +9,13 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="DockManager">
-    <window id="1">
-      <content type="file-editors">
-        <state>
-          <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-            <file leaf-file-name="Settings.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/Settings.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="119">
-                    <caret line="10" column="0" lean-forward="false" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="generate_still_bouts_v1.2_seq.py" pinned="false" current-in-tab="true">
-              <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2_seq.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="85">
-                    <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="calibrate_device_v1.0_seq.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/calibrate_device_v1.0_seq.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="119">
-                    <caret line="6" column="28" lean-forward="true" selection-start-line="6" selection-start-column="28" selection-end-line="6" selection-end-column="28" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="generic_analysis_v8.1_seq.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1_seq.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="3978">
-                    <caret line="240" column="0" lean-forward="true" selection-start-line="240" selection-start-column="0" selection-end-line="240" selection-end-column="0" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="Settings.py" pinned="false" current-in-tab="false">
-              <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/Settings.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="238">
-                    <caret line="17" column="58" lean-forward="false" selection-start-line="17" selection-start-column="58" selection-end-line="17" selection-end-column="58" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-          </leaf>
-        </state>
-      </content>
-    </window>
-  </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="Bout.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Bout.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Bout.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
+            <state relative-caret-position="476">
+              <caret line="88" column="26" lean-forward="true" selection-start-line="88" selection-start-column="26" selection-end-line="88" selection-end-column="26" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -84,11 +23,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="triaxial_calibration.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="triaxial_calibration.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/triaxial_calibration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="161">
-              <caret line="195" column="61" lean-forward="false" selection-start-line="195" selection-start-column="61" selection-end-line="195" selection-end-column="61" />
+            <state relative-caret-position="4624">
+              <caret line="286" column="0" lean-forward="false" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
               <folding>
                 <element signature="e#1#53#0" expanded="true" />
               </folding>
@@ -96,14 +35,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="batch_processing.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/batch_processing.py">
+      <file leaf-file-name="time_utilities.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/time_utilities.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="578">
+              <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -111,8 +48,8 @@
       <file leaf-file-name="Channel.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Channel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="243">
-              <caret line="406" column="36" lean-forward="false" selection-start-line="406" selection-start-column="33" selection-end-line="406" selection-end-column="36" />
+            <state relative-caret-position="544">
+              <caret line="49" column="0" lean-forward="false" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -120,12 +57,61 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="hdf5.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/hdf5.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="4845">
+              <caret line="289" column="0" lean-forward="false" selection-start-line="289" selection-start-column="0" selection-end-line="289" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="channel_inference.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/channel_inference.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3910">
-              <caret line="239" column="24" lean-forward="false" selection-start-line="239" selection-start-column="24" selection-end-line="239" selection-end-column="24" />
-              <folding />
+            <state relative-caret-position="1870">
+              <caret line="312" column="31" lean-forward="false" selection-start-line="312" selection-start-column="31" selection-end-line="312" selection-end-column="31" />
+              <folding>
+                <element signature="e#269#1939#0" expanded="false" />
+                <element signature="e#808#1912#0" expanded="false" />
+                <element signature="e#914#1385#0" expanded="false" />
+                <element signature="e#965#1299#0" expanded="false" />
+                <element signature="e#1006#1060#0" expanded="false" />
+                <element signature="e#1104#1299#0" expanded="false" />
+                <element signature="e#1207#1299#0" expanded="false" />
+                <element signature="e#1335#1385#0" expanded="false" />
+                <element signature="e#1441#1912#0" expanded="false" />
+                <element signature="e#1492#1826#0" expanded="false" />
+                <element signature="e#1533#1587#0" expanded="false" />
+                <element signature="e#1631#1826#0" expanded="false" />
+                <element signature="e#1734#1826#0" expanded="false" />
+                <element signature="e#1862#1912#0" expanded="false" />
+                <element signature="e#1981#2259#0" expanded="false" />
+                <element signature="e#2294#2832#0" expanded="false" />
+                <element signature="e#2294#2380#1" expanded="false" />
+                <element signature="e#2858#3209#0" expanded="false" />
+                <element signature="e#2858#2945#1" expanded="false" />
+                <element signature="e#3238#3402#0" expanded="false" />
+                <element signature="e#3430#3794#0" expanded="false" />
+                <element signature="e#3873#4404#0" expanded="false" />
+                <element signature="e#4452#4593#0" expanded="false" />
+                <element signature="e#4452#4512#1" expanded="false" />
+                <element signature="e#4654#4769#0" expanded="false" />
+                <element signature="e#4654#4714#1" expanded="false" />
+                <element signature="e#4916#5983#0" expanded="false" />
+                <element signature="e#6139#6628#0" expanded="false" />
+                <element signature="e#6139#6269#1" expanded="false" />
+                <element signature="e#7215#7356#0" expanded="false" />
+                <element signature="e#7215#7271#1" expanded="false" />
+                <element signature="e#7421#7534#0" expanded="false" />
+                <element signature="e#7421#7477#1" expanded="false" />
+                <element signature="e#7648#8054#0" expanded="false" />
+                <element signature="e#7648#7735#1" expanded="false" />
+                <element signature="e#8759#8920#0" expanded="false" />
+                <element signature="e#9116#9437#1" expanded="false" />
+                <element signature="e#9742#9832#1" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -133,8 +119,8 @@
       <file leaf-file-name="data_loading.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_loading.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="407">
-              <caret line="1225" column="77" lean-forward="false" selection-start-line="1225" selection-start-column="77" selection-end-line="1225" selection-end-column="77" />
+            <state relative-caret-position="26622">
+              <caret line="1589" column="1" lean-forward="false" selection-start-line="1589" selection-start-column="0" selection-end-line="1931" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -145,21 +131,19 @@
       <file leaf-file-name="Time_Series.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Time_Series.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="960">
-              <caret line="324" column="30" lean-forward="false" selection-start-line="324" selection-start-column="30" selection-end-line="324" selection-end-column="30" />
+            <state relative-caret-position="459">
+              <caret line="27" column="19" lean-forward="false" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="hdf5.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/hdf5.py">
+      <file leaf-file-name="Bout_Collection.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Bout_Collection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3996">
-              <caret line="65" column="41" lean-forward="false" selection-start-line="65" selection-start-column="38" selection-end-line="65" selection-end-column="41" />
-              <folding>
-                <element signature="e#0#40#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="85">
+              <caret line="16" column="20" lean-forward="false" selection-start-line="16" selection-start-column="20" selection-end-line="16" selection-end-column="21" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -175,75 +159,45 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>timestamps_to_offsets</find>
-      <find>resamp</find>
-      <find>final_timestamp</find>
-      <find>do_calibration</find>
-      <find>res</find>
-      <find>cp</find>
-      <find>cwa_header</find>
-      <find>parse_ax</find>
-      <find>packing</find>
-      <find>pack</find>
-      <find>cwa</find>
-      <find>'sample_count'</find>
-      <find>sample_count</find>
-      <find>sample</find>
-      <find>CAL_ERROR_THRESHOLD</find>
-      <find>cwa_parse_metadata</find>
-      <find>cwa_info</find>
-      <find>parse_axivity_header</find>
-      <find>first_cap_re</find>
-      <find>arg</find>
-      <find>octant_occupancy</find>
-      <find>find_calibration_parameter</find>
-      <find>dataframe_regression_two</find>
-      <find>undo_calibration</find>
-      <find>T_dev</find>
-      <find>dataframe_transformation</find>
-      <find>find_calibration_parameters</find>
-      <find>std</find>
-      <find>dataframe_regression</find>
-      <find>create_original_and_matched</find>
+      <find>sub</find>
+      <find>linew</find>
+      <find>linewidth</find>
+      <find>channel_list</find>
+      <find>piece</find>
+      <find>epoch</find>
+      <find>piecewise</find>
+      <find>bouts</find>
+      <find>add</find>
+      <find>bout</find>
+      <find>quality</find>
+      <find>prefix</find>
+      <find>infer_nonwear_for_qc</find>
+      <find>set_contents</find>
+      <find>start_of_day</find>
+      <find>zip</find>
+      <find>time_period_minus_bouts</find>
+      <find>strftime</find>
+      <find>def total_seconds</find>
+      <find>total_seconds</find>
+      <find>duration</find>
+      <find>channel_to_file</find>
+      <find>output</find>
+      <find>channel_to</find>
+      <find>axivity_read</find>
+      <find>read_timestamp</find>
+      <find>axivity_read_timestamp_raw</find>
+      <find>print</find>
+      <find>PAL</find>
+      <find>HDF5</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/consolidate_results.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/pampro_analysis/_analysis/consolidate_results.py" />
-        <option value="$PROJECT_DIR$/hdf5.py" />
-        <option value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers/extract_axivity_header_updated2.py" />
-        <option value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers/extract_axivity_header_v2.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/test.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/convert_hdf5_v2.2.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/meta_test/_analysis/convert_hdf5_v2.2.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/meta_test/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test_axivity_2/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test_axivity_notemp_2/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv_2/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv_notemp_2/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/pampro_documentation/conf.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/generate_still_bouts_v1.2.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/test.py" />
-        <option value="$PROJECT_DIR$/data_loading.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/calibration_database/Ax14243/3dplot.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/calibration_database/3dplot.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/plot_test/3dplot.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/calibrate_device_v1.0.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_notemp/_analysis/create_calibration_database_v1.0.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_temp/_analysis/create_calibration_database_v1.0.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_notemp/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_temp/_analysis/Settings.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_2/_analysis/Settings.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/Settings.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/CalibrationTest/_analysis/calibrate_device_v1.0.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/generate_still_bouts_v1.2.py" />
-        <option value="$PROJECT_DIR$/Time_Series.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_2/_analysis/calibrate_device_v1.0.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/calibrate_device_v1.0.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/create_calibration_database_v1.0.py" />
@@ -256,19 +210,48 @@
         <option value="$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/generic_analysis_v8.1.py" />
         <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/Settings.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/Settings.py" />
         <option value="$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2_seq.py" />
         <option value="$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/test.py" />
-        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1_seq.py" />
         <option value="$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/calibrate_device_v1.0_seq.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generate_still_bouts_v1.2_seq.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1_seq.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/calibrate_device_v1.0_seq.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/convert_hdf5_v2.2.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/test2.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_folders_files_v1.0.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/Settings.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_calibration_database_v1.0.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/convert_hdf5_v2.2.py" />
+        <option value="$PROJECT_DIR$/batch_processing.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/Settings.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/create_folders_files_v1.1.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_folders_files_v1.1.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/test.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/test.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1.py" />
+        <option value="$PROJECT_DIR$/Time_Series.py" />
+        <option value="$PROJECT_DIR$/quality_control.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw_copy.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/consolidate_QC_results.py" />
+        <option value="$PROJECT_DIR$/Bout.py" />
+        <option value="$PROJECT_DIR$/Channel.py" />
+        <option value="$PROJECT_DIR$/channel_inference.py" />
+        <option value="$PROJECT_DIR$/time_utilities.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_settings.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/GoA_T1/_analysis/QC_from_raw.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/GoA_T1/_analysis/load_file.py" />
+        <option value="$PROJECT_DIR$/../../../dev_pampro/activpal_test.py" />
+        <option value="$PROJECT_DIR$/data_loading.py" />
+        <option value="$PROJECT_DIR$/../../../activpal_test/activpal_test.py" />
+        <option value="$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw_singlefile.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-8" />
-    <option name="y" value="-8" />
-    <option name="width" value="1296" />
-    <option name="height" value="1000" />
+    <option name="x" value="2209" />
+    <option name="width" value="976" />
+    <option name="height" value="984" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -307,7 +290,12 @@
   </component>
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="C:/Python36/python.exe" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="Y:\data\PATT\BVS_test\_analysis" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -322,96 +310,6 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.extract_axivity_header_updated2">
-    <configuration default="false" name="test" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="pampro" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="create_calibration_database_v1.0" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/pampro_calibration_database" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="pampro" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/pampro_calibration_database/create_calibration_database_v1.0.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="test (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="pampro" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis/test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="retest" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="pampro" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis/retest.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="extract_axivity_header_updated2" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="pampro" />
-      <option name="SCRIPT_NAME" value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers/extract_axivity_header_updated2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <method />
-    </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -477,6 +375,91 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method />
     </configuration>
+    <configuration name="create_calibration_database_v1.0" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/pampro_calibration_database" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="pampro" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/pampro_calibration_database/create_calibration_database_v1.0.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="extract_axivity_header_updated2" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="pampro" />
+      <option name="SCRIPT_NAME" value="V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/Utilities/extract_headers/extract_axivity_header_updated2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="retest" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="pampro" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis/retest.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="test (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="pampro" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test_geneactiv/_analysis/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="pampro" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../../../../PATT/EH_test/_analysis/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
     <list size="5">
       <item index="0" class="java.lang.String" itemvalue="Python.test" />
       <item index="1" class="java.lang.String" itemvalue="Python.create_calibration_database_v1.0" />
@@ -508,26 +491,25 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1296" height="1000" extended-state="7" />
-    <editor active="true" />
+    <frame x="2209" y="0" width="976" height="984" extended-state="0" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2536349" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34395605" sideWeight="0.503231" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34395605" sideWeight="0.49676898" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34391534" sideWeight="0.503231" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34395605" sideWeight="0.49676898" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32988507" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -541,444 +523,348 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="2" />
+      <option name="time" value="3" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="15" column="83" lean-forward="false" selection-start-line="15" selection-start-column="83" selection-end-line="15" selection-end-column="83" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/convert_hdf5_v2.2_notemp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="555">
-          <caret line="56" column="58" lean-forward="false" selection-start-line="56" selection-start-column="8" selection-end-line="56" selection-end-column="58" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/generic_analysis_v8.1.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="71" column="46" lean-forward="true" selection-start-line="71" selection-start-column="4" selection-end-line="71" selection-end-column="46" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/generate_still_bouts_v1.2_notemp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="68" column="0" lean-forward="true" selection-start-line="68" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_nofactors_notemp/_analysis/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="12" column="0" lean-forward="true" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_loading.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="407">
-          <caret line="1225" column="77" lean-forward="false" selection-start-line="1225" selection-start-column="77" selection-end-line="1225" selection-end-column="77" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/calibration_database/Ax14243/3dplot.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="11" column="39" lean-forward="true" selection-start-line="11" selection-start-column="39" selection-end-line="11" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/calibration_database/3dplot.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="5" column="28" lean-forward="true" selection-start-line="5" selection-start-column="28" selection-end-line="5" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Downloads/mixed_subplots_demo.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generate_still_bouts_v1.2_seq.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/calibrate_device_v1.0_seq.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/calibrate_device_v1.0_seq.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_calibration_test/_analysis/convert_hdf5_v2.2.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/plot_test/3dplot.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1_seq.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/convert_hdf5_v2.2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="782">
-          <caret line="45" column="4" lean-forward="false" selection-start-line="45" selection-start-column="4" selection-end-line="45" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#18#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="204">
+          <caret line="37" column="0" lean-forward="false" selection-start-line="37" selection-start-column="0" selection-end-line="37" selection-end-column="0" />
         </state>
       </provider>
     </entry>
-    <entry file="file://V:/Functional_Groups/PhysicalActivity/PA_Tech_Team/PAMPRO/Scripts/old analysis scripts/analysis_1h_generic_v6.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1377">
-          <caret line="12" column="0" lean-forward="true" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="33" column="68" lean-forward="true" selection-start-line="33" selection-start-column="68" selection-end-line="33" selection-end-column="68" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/calibrate_device_v1.0.sh">
+    <entry file="file://$PROJECT_DIR$/pampro_utilities.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_3/_analysis/calibrate_device_v1.0.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/test2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="84" column="0" lean-forward="true" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="119">
+          <caret line="7" column="11" lean-forward="false" selection-start-line="7" selection-start-column="11" selection-end-line="7" selection-end-column="11" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_notemp/_analysis/create_calibration_database_v1.0.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_folders_files_v1.0.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="91" lean-forward="true" selection-start-line="10" selection-start-column="16" selection-end-line="10" selection-end-column="91" />
-          <folding />
+        <state relative-caret-position="255">
+          <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_temp/_analysis/create_calibration_database_v1.0.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/calibrate_device_v1.0.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="63" lean-forward="false" selection-start-line="10" selection-start-column="63" selection-end-line="10" selection-end-column="63" />
-          <folding />
+        <state relative-caret-position="1717">
+          <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_temp/_analysis/Job_file_creator_v2.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/create_folders_files_v1.1.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_folders_files_v1.1.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="19" column="52" lean-forward="true" selection-start-line="19" selection-start-column="52" selection-end-line="19" selection-end-column="52" />
-          <folding>
-            <element signature="e#409#420#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="391">
+          <caret line="23" column="51" lean-forward="true" selection-start-line="23" selection-start-column="51" selection-end-line="23" selection-end-column="51" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/pampro_calibration_database/create_calibration_database_v1.0.py">
+    <entry file="file://$PROJECT_DIR$/../../../time_freeze/_analysis/convert_hdf5_v2.2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="597">
+          <caret line="67" column="17" lean-forward="true" selection-start-line="67" selection-start-column="17" selection-end-line="67" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" column="54" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/test.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../Fenland_2_GeneActiv/QCs/2017_Onwards/_analysis/QC_geneactiv_v2_1min.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="425">
+          <caret line="28" column="0" lean-forward="true" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../Fenland_2_GeneActiv/QCs/2017_Onwards/_analysis/QC_geneactiv_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-442">
+          <caret line="22" column="21" lean-forward="true" selection-start-line="22" selection-start-column="21" selection-end-line="22" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Roaming/MobaXterm/slash/RemoteFiles/29756596_68_4/views.py" />
+    <entry file="file://$USER_HOME$/AppData/Roaming/MobaXterm/slash/RemoteFiles/29756596_68_8/wsgi.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generate_still_bouts_v1.2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/create_calibration_database_v1.0.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="31" column="8" lean-forward="false" selection-start-line="31" selection-start-column="8" selection-end-line="31" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/Settings.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="289">
-          <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding />
+          <caret line="17" column="92" lean-forward="false" selection-start-line="17" selection-start-column="92" selection-end-line="17" selection-end-column="92" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_temp/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="595">
-          <caret line="38" column="38" lean-forward="true" selection-start-line="38" selection-start-column="38" selection-end-line="38" selection-end-column="38" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/HotCold_notemp/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="30" column="60" lean-forward="false" selection-start-line="30" selection-start-column="60" selection-end-line="30" selection-end-column="60" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_2/_analysis/Settings.py">
+    <entry file="file://$PROJECT_DIR$/../setup.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="204">
-          <caret line="15" column="49" lean-forward="false" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="49" />
-          <folding />
+          <caret line="12" column="0" lean-forward="true" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/Settings.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="19" column="69" lean-forward="true" selection-start-line="19" selection-start-column="69" selection-end-line="19" selection-end-column="69" />
+        <state relative-caret-position="459">
+          <caret line="30" column="66" lean-forward="true" selection-start-line="30" selection-start-column="66" selection-end-line="30" selection-end-column="66" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/convert_hdf5_v2.2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="17" column="37" lean-forward="true" selection-start-line="17" selection-start-column="37" selection-end-line="17" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/consolidate_results.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/convert_hdf5_v2.2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="506">
+          <caret line="59" column="61" lean-forward="false" selection-start-line="59" selection-start-column="8" selection-end-line="59" selection-end-column="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/batch_processing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2125">
+          <caret line="132" column="29" lean-forward="false" selection-start-line="132" selection-start-column="29" selection-end-line="132" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/quality_control.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw_copy.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/Settings.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3400">
+          <caret line="200" column="69" lean-forward="false" selection-start-line="199" selection-start-column="21" selection-end-line="200" selection-end-column="69" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/consolidate_QC_results.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="493">
+          <caret line="32" column="53" lean-forward="false" selection-start-line="32" selection-start-column="53" selection-end-line="32" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Bout_Collection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="16" column="20" lean-forward="false" selection-start-line="16" selection-start-column="20" selection-end-line="16" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/channel_inference.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1870">
+          <caret line="312" column="31" lean-forward="false" selection-start-line="312" selection-start-column="31" selection-end-line="312" selection-end-column="31" />
+          <folding>
+            <element signature="e#269#1939#0" expanded="false" />
+            <element signature="e#808#1912#0" expanded="false" />
+            <element signature="e#914#1385#0" expanded="false" />
+            <element signature="e#965#1299#0" expanded="false" />
+            <element signature="e#1006#1060#0" expanded="false" />
+            <element signature="e#1104#1299#0" expanded="false" />
+            <element signature="e#1207#1299#0" expanded="false" />
+            <element signature="e#1335#1385#0" expanded="false" />
+            <element signature="e#1441#1912#0" expanded="false" />
+            <element signature="e#1492#1826#0" expanded="false" />
+            <element signature="e#1533#1587#0" expanded="false" />
+            <element signature="e#1631#1826#0" expanded="false" />
+            <element signature="e#1734#1826#0" expanded="false" />
+            <element signature="e#1862#1912#0" expanded="false" />
+            <element signature="e#1981#2259#0" expanded="false" />
+            <element signature="e#2294#2832#0" expanded="false" />
+            <element signature="e#2294#2380#1" expanded="false" />
+            <element signature="e#2858#3209#0" expanded="false" />
+            <element signature="e#2858#2945#1" expanded="false" />
+            <element signature="e#3238#3402#0" expanded="false" />
+            <element signature="e#3430#3794#0" expanded="false" />
+            <element signature="e#3873#4404#0" expanded="false" />
+            <element signature="e#4452#4593#0" expanded="false" />
+            <element signature="e#4452#4512#1" expanded="false" />
+            <element signature="e#4654#4769#0" expanded="false" />
+            <element signature="e#4654#4714#1" expanded="false" />
+            <element signature="e#4916#5983#0" expanded="false" />
+            <element signature="e#6139#6628#0" expanded="false" />
+            <element signature="e#6139#6269#1" expanded="false" />
+            <element signature="e#7215#7356#0" expanded="false" />
+            <element signature="e#7215#7271#1" expanded="false" />
+            <element signature="e#7421#7534#0" expanded="false" />
+            <element signature="e#7421#7477#1" expanded="false" />
+            <element signature="e#7648#8054#0" expanded="false" />
+            <element signature="e#7648#7735#1" expanded="false" />
+            <element signature="e#8759#8920#0" expanded="false" />
+            <element signature="e#9116#9437#1" expanded="false" />
+            <element signature="e#9742#9832#1" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_settings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="40" lean-forward="true" selection-start-line="6" selection-start-column="40" selection-end-line="6" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="40" lean-forward="true" selection-start-line="5" selection-start-column="40" selection-end-line="5" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/GoA_T1/_analysis/QC_settings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="15" column="65" lean-forward="false" selection-start-line="15" selection-start-column="65" selection-end-line="15" selection-end-column="65" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/GoA_T1/_analysis/load_file.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="17" column="17" lean-forward="true" selection-start-line="17" selection-start-column="17" selection-end-line="17" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/GoA_T1/_analysis/QC_from_raw.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="35" column="36" lean-forward="true" selection-start-line="35" selection-start-column="36" selection-end-line="35" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../dev_pampro/activpal_test.py" />
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/temp_cal_test/_analysis/convert_hdf5_v2.2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="799">
+          <caret line="65" column="14" lean-forward="true" selection-start-line="59" selection-start-column="8" selection-end-line="65" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hdf5.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4845">
+          <caret line="289" column="0" lean-forward="false" selection-start-line="289" selection-start-column="0" selection-end-line="289" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Time_Series.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="459">
+          <caret line="27" column="19" lean-forward="false" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/time_utilities.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Channel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="243">
-          <caret line="406" column="36" lean-forward="false" selection-start-line="406" selection-start-column="33" selection-end-line="406" selection-end-column="36" />
+        <state relative-caret-position="544">
+          <caret line="49" column="0" lean-forward="false" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/CalibrationTest/_analysis/calibrate_device_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="538">
-          <caret line="89" column="0" lean-forward="false" selection-start-line="89" selection-start-column="0" selection-end-line="89" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/generic_analysis_v8.1.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="207">
-          <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/generate_still_bouts_v1.2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="368">
-          <caret line="74" column="131" lean-forward="false" selection-start-line="74" selection-start-column="103" selection-end-line="74" selection-end-column="131" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_geneactiv_2/_analysis/calibrate_device_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="504">
-          <caret line="90" column="104" lean-forward="false" selection-start-line="90" selection-start-column="104" selection-end-line="90" selection-end-column="104" />
-          <folding>
-            <element signature="e#0#18#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Time_Series.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="960">
-          <caret line="324" column="30" lean-forward="false" selection-start-line="324" selection-start-column="30" selection-end-line="324" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/EH_test_axivity_2/_analysis/calibrate_device_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="59" column="62" lean-forward="false" selection-start-line="59" selection-start-column="62" selection-end-line="59" selection-end-column="62" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/pampro_documentation/conf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="21" column="29" lean-forward="false" selection-start-line="21" selection-start-column="29" selection-end-line="21" selection-end-column="29" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/create_calibration_database_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="16" column="53" lean-forward="true" selection-start-line="16" selection-start-column="53" selection-end-line="16" selection-end-column="53" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://H:/goactive/PROCESSING/T1/_analysis/analysis_1h_generic_v4.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-40">
-          <caret line="16" column="33" lean-forward="true" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/generate_still_bouts_v1.2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-771">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/create_calibration_database_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="11" column="0" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/ALL_PAMS_HISTORICAL/_analysis/generic_analysis_v7.2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="41" column="0" lean-forward="true" selection-start-line="41" selection-start-column="0" selection-end-line="42" selection-end-column="72" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/ALL_PAMS_HISTORICAL/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="663">
-          <caret line="42" column="84" lean-forward="true" selection-start-line="42" selection-start-column="84" selection-end-line="42" selection-end-column="84" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Bout.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/calculate_local_error.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="13" column="0" lean-forward="false" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2 - Copy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1202">
-          <caret line="84" column="85" lean-forward="false" selection-start-line="84" selection-start-column="85" selection-end-line="84" selection-end-column="85" />
-          <folding>
-            <element signature="e#442#460#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/Settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="10" column="0" lean-forward="false" selection-start-line="10" selection-start-column="0" selection-end-line="10" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="25" column="106" lean-forward="false" selection-start-line="25" selection-start-column="106" selection-end-line="25" selection-end-column="106" />
-          <folding>
-            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/triaxial_calibration.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="195" column="61" lean-forward="false" selection-start-line="195" selection-start-column="61" selection-end-line="195" selection-end-column="61" />
+        <state relative-caret-position="4624">
+          <caret line="286" column="0" lean-forward="false" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
           <folding>
             <element signature="e#1#53#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/Settings.py">
+    <entry file="file://$PROJECT_DIR$/../../../activpal_test/activpal_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="23" column="21" lean-forward="false" selection-start-line="23" selection-start-column="21" selection-end-line="23" selection-end-column="21" />
-          <folding />
+        <state relative-caret-position="476">
+          <caret line="27" column="13" lean-forward="true" selection-start-line="27" selection-start-column="13" selection-end-line="27" selection-end-column="13" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/Settings.py">
+    <entry file="file://$PROJECT_DIR$/data_loading.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="17" column="58" lean-forward="false" selection-start-line="17" selection-start-column="58" selection-end-line="17" selection-end-column="58" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/calibrate_device_v1.0.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="90" column="104" lean-forward="false" selection-start-line="90" selection-start-column="4" selection-end-line="90" selection-end-column="104" />
+        <state relative-caret-position="26622">
+          <caret line="1589" column="1" lean-forward="false" selection-start-line="1589" selection-start-column="0" selection-end-line="1931" selection-end-column="0" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/test.py">
+    <entry file="file://$PROJECT_DIR$/Bout.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="21" column="17" lean-forward="true" selection-start-line="21" selection-start-column="17" selection-end-line="21" selection-end-column="17" />
+        <state relative-caret-position="476">
+          <caret line="88" column="26" lean-forward="true" selection-start-line="88" selection-start-column="26" selection-end-line="88" selection-end-column="26" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/Temperature_cal_testing/Goactive_test/_analysis/generic_analysis_v8.1.py">
+    <entry file="file://$PROJECT_DIR$/../../../../PATT/QC_scripts/_analysis/QC_from_raw_singlefile.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3184">
-          <caret line="15" column="11" lean-forward="true" selection-start-line="15" selection-start-column="11" selection-end-line="15" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/calibrate_device_v1.0_seq.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="6" column="28" lean-forward="true" selection-start-line="6" selection-start-column="28" selection-end-line="6" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PATT/BVS_test/_analysis/generic_analysis_v8.1_seq.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3978">
-          <caret line="240" column="0" lean-forward="true" selection-start-line="240" selection-start-column="0" selection-end-line="240" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../../../PA_SEMINAR/PAMS_2018/_analysis/generate_still_bouts_v1.2_seq.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
-          <folding />
+        <state relative-caret-position="339">
+          <caret line="163" column="0" lean-forward="true" selection-start-line="163" selection-start-column="0" selection-end-line="163" selection-end-column="0" />
+          <folding>
+            <element signature="e#59#90#0" expanded="false" />
+            <element signature="e#600#618#0" expanded="true" />
+            <element signature="e#1022#1049#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>

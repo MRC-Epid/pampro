@@ -6,6 +6,7 @@ from matplotlib import rcParams
 
 from datetime import datetime, date, time, timedelta
 import numpy as np
+import math
 from collections import OrderedDict
 
 
@@ -271,13 +272,17 @@ class Time_Series(object):
             axis.set_xlim(axis_xlim)
 
             for c in channels:
-                self.get_channel(c).draw(axis, time_period=axis_xlim)
+                channel = self.get_channel(c)
+                if len(channels) == 1:
+                    axis.set_ylim(channel.minimum, channel.maximum)
+                channel.draw(axis, time_period=axis_xlim)
 
             handles, labels = axis.get_legend_handles_labels()
             by_label = OrderedDict(zip(labels, handles))
             legend = axis.legend(by_label.values(), by_label.keys(), loc='upper right')
             legend.get_frame().set_linewidth(0.0)
             axis.grid()
+
 
         fig.tight_layout()
 

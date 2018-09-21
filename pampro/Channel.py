@@ -33,6 +33,8 @@ class Channel(object):
         self.cached_indices = {}
         self.timestamp_policy = "normal" # sparse, offset
         self.missing_value = False
+        self.minimum = 0
+        self.maximum = 0
 
 
     def clone(self):
@@ -50,6 +52,9 @@ class Channel(object):
         self.calculate_timeframe()
 
         self.determine_appropriate_methods()
+
+        self.minimum = data.min()
+        self.maximum = data.max()
 
     def determine_appropriate_methods(self):
         """
@@ -243,7 +248,7 @@ class Channel(object):
 
             try:
                 i = self.cached_indices[datetimestamp]
-            except:
+            except KeyError:
                 i = self.get_index_appropriately(datetimestamp)
                 self.cached_indices[datetimestamp] = i
 
@@ -733,7 +738,7 @@ class Channel(object):
             end = time_period[1]
 
         #print("Piecewise statistics: {}".format(self.name))
-        windows = self.generate_piecewise_windows(start,end, window_size)
+        windows = self.generate_piecewise_windows(start, end, window_size)
 
         # Else if we passed an integer as our window size
         #elif str(type(window_size)) == "<class 'int'>":
@@ -770,7 +775,7 @@ class Channel(object):
             if state == 0:
 
                 # And if this value is in the range we want
-                if value >= low and value <= high:
+                if low <= value <= high:
 
                     # Start a bout
                     state = 1
@@ -781,7 +786,7 @@ class Channel(object):
             else:
 
                 # And this value is in the range we want
-                if value >= low and value <= high:
+                if low <= value <= high:
 
                     # So the bout expands to include this value
                     end_index = i
@@ -882,6 +887,7 @@ class Channel(object):
         for a in annotations:
             self.add_annotation(a)
 
+
     def draw(self, axis, time_period=False):
 
         #if not self.sparsely_timestamped:
@@ -897,6 +903,7 @@ class Channel(object):
 
         for a in self.annotations:
             axis.axvspan(xmin=a.start_timestamp, xmax=a.end_timestamp, **a.draw_properties)
+
 
     def __str__(self):
 
@@ -966,6 +973,5 @@ def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skelet
     for bout in bouts:
         result.fill(bout, in_value)
 
-
-
     return result
+

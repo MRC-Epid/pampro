@@ -68,7 +68,7 @@ def batch_process_list(analysis_function, job_file, job_num=1, num_jobs=1, live_
     s = pd.read_csv(job_file, squeeze=True)
     job_details = s.to_dict()
 
-    batch_process_steptwo(analysis_function, batch_start_time, job_details, job_num, num_jobs, live_feedback)
+    batch_process_steptwo(analysis_function, batch_start_time, job_file, job_details, job_num, num_jobs, live_feedback)
 
 
 def batch_process(analysis_function, job_file, job_num=1, num_jobs=1, live_feedback=False):
@@ -81,10 +81,10 @@ def batch_process(analysis_function, job_file, job_num=1, num_jobs=1, live_feedb
     # Load the document listing all the files to be processed
     job_details = load_job_details(job_file)
 
-    batch_process_steptwo(analysis_function, batch_start_time, job_details, job_num, num_jobs, live_feedback)
+    batch_process_steptwo(analysis_function, batch_start_time, job_file, job_details, job_num, num_jobs, live_feedback)
 
 
-def batch_process_steptwo(analysis_function, batch_start_time, job_details, job_num, num_jobs, live_feedback):
+def batch_process_steptwo(analysis_function, batch_start_time, job_file, job_details, job_num, num_jobs, live_feedback):
     """
     The bulk of the batch process of an analysis function.  Performed once a dictionary of job details has been generated.
     """
@@ -93,7 +93,10 @@ def batch_process_steptwo(analysis_function, batch_start_time, job_details, job_
     job_section = job_indices(job_num, num_jobs, len(job_details))
     my_jobs = list(job_details.keys())[job_section[0]:job_section[1]]
 
-    output_log = False
+    task_name = analysis_function.__name__
+
+    error_log = False
+    output_log = open(task_name + "_output_{}.csv".format(job_num), "w")
 
     if live_feedback:
         # Create a JSON file to store progress information in
@@ -102,8 +105,10 @@ def batch_process_steptwo(analysis_function, batch_start_time, job_details, job_
 
     for n, job in enumerate(my_jobs):
 
-        print("Job {}/{}: {}\n".format(n+1, len(my_jobs), job))
+        output_log.write("\nJob {}/{}: {}\n".format(n+1, len(my_jobs), job))
         job_start_time = datetime.now()
+        output_log.write("\nJob start time: " + str(job_start_time))
+        output_log.flush()
 
         try:
             if live_feedback:
@@ -115,26 +120,28 @@ def batch_process_steptwo(analysis_function, batch_start_time, job_details, job_
 
             tb = traceback.format_exc()
 
-            # Create the output file only if an error has occurred
-            if output_log is False:
-                output_log = open("error_log_{}.csv".format(job_num), "w")
+            # Create the error file only if an error has occurred
+            if error_log is False:
+                error_log = open(task_name + "_error_{}.csv".format(job_num), "w")
 
             print("Exception:" + str(sys.exc_info()))
             print(tb)
 
-            output_log.write( str(job_details[job]) + "\n" )
-            output_log.write("Exception:" + str(sys.exc_info()) + "\n")
-            output_log.write(tb + "\n\n")
+            error_log.write( str(job_details[job]) + "\n" )
+            error_log.write("Exception:" + str(sys.exc_info()) + "\n")
+            error_log.write(tb + "\n\n")
+            error_log.flush()
 
         job_end_time = datetime.now()
         job_duration = job_end_time - job_start_time
-        print("\nJob run time: " + str(job_duration))
+        output_log.write("\nJob run time: " + str(job_duration))
 
         batch_duration = job_end_time - batch_start_time
         batch_remaining = (len(my_jobs)-n)*job_duration
-        print("Batch run time: " + str(batch_duration))
-        print("Time remaining: " + str(batch_remaining))
-        print("Predicted completion time:" + str((batch_remaining + datetime.now())) + "\n")
+        output_log.write("\nBatch run time: " + str(batch_duration))
+        output_log.write("\nTime remaining: " + str(batch_remaining))
+        output_log.write("\nPredicted completion time:" + str((batch_remaining + datetime.now())) + "\n")
+        output_log.flush()
 
         if live_feedback:
             feedback = get_feedback(feedback_filename)
@@ -143,13 +150,15 @@ def batch_process_steptwo(analysis_function, batch_start_time, job_details, job_
 
     batch_end_time = datetime.now()
     batch_duration = batch_end_time - batch_start_time
-    print("Batch run time: " + str(batch_duration))
+    output_log.write("\nBatch run time: " + str(batch_duration))
+    output_log.flush()
+    output_log.close()
 
     if live_feedback:
         feedback = get_feedback(feedback_filename)
         feedback["complete"] = 1
         write_feedback(feedback, feedback_filename)
 
-    # If everything went smoothly, output_log is False because it was never a file object
-    if output_log is not False:
-        output_log.close()
+    # If everything went smoothly, error_log is False because it was never a file object
+    if error_log is not False:
+        error_log.close()

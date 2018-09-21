@@ -60,7 +60,7 @@ def total_time(bouts):
 
 def bout_list_intersection(bouts_a, bouts_b):
 
-	intersection = []
+	intersections = []
 
 	if len(bouts_a) > 0 and len(bouts_b) > 0:
 		for bout_a in bouts_a:
@@ -69,9 +69,9 @@ def bout_list_intersection(bouts_a, bouts_b):
 				if bout_a.overlaps(bout_b):
 
 					bout_c = bout_a.intersection(bout_b)
-					intersection.append(bout_c)
+					intersections.append(bout_c)
 
-	return intersection
+	return intersections
 
 def bout_list_union(bouts_a, bouts_b):
 
@@ -147,7 +147,6 @@ def limit_to_lengths(bouts, min_length=False, max_length=False, sorted=False):
 
 def cache_lengths(bouts):
 	pass
-
 
 
 def write_bouts_to_file(bouts, file_target, date_format="%d/%m/%Y %H:%M:%S:%f"):
