@@ -320,7 +320,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         if group_number == 1:
             for k, v in file_header.items():
                 if k is not "start_datetime_python":
-                    group.attrs[k] = v
+                    group.attrs[k] = v 
                 else:
                     pass
         else:

@@ -33,8 +33,6 @@ class Channel(object):
         self.cached_indices = {}
         self.timestamp_policy = "normal" # sparse, offset
         self.missing_value = False
-        self.minimum = 0
-        self.maximum = 0
 
 
     def clone(self):
@@ -53,8 +51,6 @@ class Channel(object):
 
         self.determine_appropriate_methods()
 
-        self.minimum = data.min()
-        self.maximum = data.max()
 
     def determine_appropriate_methods(self):
         """

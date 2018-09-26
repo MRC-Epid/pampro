@@ -289,7 +289,7 @@ class Time_Series(object):
             plt.close("all")
     
     
-    def draw_qc(self, channel_combinations, time_period=False, file_target=False, width=6.3, height=4.35):
+    def draw_qc(self, plotting_df, time_period=False, file_target=False, width=6.3, height=4.35):
 
         try:
             rcParams['font.size'] = '8'
@@ -320,16 +320,15 @@ class Time_Series(object):
         else:
             axis_xlim = (time_period[0], time_period[1])
 
-        axes = [fig.add_subplot(len(channel_combinations), 1, 1+index) for index in range(len(channel_combinations))]
-
-        for channels, axis in zip(channel_combinations, axes):
+        axes = [fig.add_subplot(len(plotting_df.index), 1, 1+index) for index in range(len(plotting_df.index))]
+        
+        for index_range, axis in zip (range(len(plotting_df.index)), axes):
 
             axis.set_xlim(axis_xlim)
 
-            for c in channels:
-                channel = self.get_channel(c)
-                if len(channels) == 1:
-                    axis.set_ylim(channel.minimum, channel.maximum)
+            for index in plotting_df.index:
+                channel = self.get_channel(plotting_df.at[index,'channel_name'])
+                axis.set_ylim(plotting_df.at[index,'channel_min'], plotting_df.at[index,'channel_max'])
                 channel.draw(axis, time_period=axis_xlim)
 
             handles, labels = axis.get_legend_handles_labels()
