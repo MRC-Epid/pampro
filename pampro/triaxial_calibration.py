@@ -39,12 +39,12 @@ def is_calibrated(channel):
     return hasattr(channel, "calibrated") and channel.calibrated == True
 
 
-def calibrate_slave(x, y, z, budget=1000, noise_cutoff_mg=13):
+def calibrate_slave(x, y, z, temperature, budget=1000, noise_cutoff_mg=13):
     """
     Slave to calibrate()
     """
 
-    stillbouts_ts, calibration_diagnostics = calibrate_stepone(x, y, z, budget=1000, noise_cutoff_mg=13)
+    stillbouts_ts, calibration_diagnostics = calibrate_stepone(x, y, z, temperature, budget=1000, noise_cutoff_mg=13)
 
     calibration_diagnostics = calibrate_steptwo(stillbouts_ts, calibration_diagnostics)
 
@@ -54,8 +54,8 @@ def calibrate_slave(x, y, z, budget=1000, noise_cutoff_mg=13):
 def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_file=None):
     """ Use still bouts in the given triaxial data to calibrate it and return the calibrated channels """
 
-    args = {"x":x, "y":y, "z":z, "budget":budget, "noise_cutoff_mg":noise_cutoff_mg}
-    params = ["budget", "noise_cutoff_mg"]
+    args = {"x":x, "y":y, "z":z, "temperature":temperature, "budget":budget, "noise_cutoff_mg":noise_cutoff_mg}
+    params = ["temperature", "budget", "noise_cutoff_mg"]
     calibration_diagnostics = do_if_not_cached("calibrate", calibrate_slave, args, params, get_calibrate, set_calibrate, hdf5_file)
 
     # Regardless of how we get the results, extract the offset and scales

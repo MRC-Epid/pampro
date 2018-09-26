@@ -712,37 +712,24 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         header = header_info
 
 
-    elif (source_type.startswith("GT3X+_CSV")):
-        # if source file is zipped, unzip to read
-        if source_type.endswith("_ZIP"):
-            filename = source.split("/")[-1].replace(".zip", ".csv")
-            archive = zipfile.ZipFile(source)
-            file_handle = archive.open(filename)
-
-        else:
-            file_handle = open(source, 'r')
+    elif (source_type == "GT3X+_CSV"):
 
         first_lines = []
-        for i in range(0, 10):
-            s = file_handle.readline().strip().decode("utf-8")
+        f = open(source, 'r')
+        for i in range(0,10):
+            s = f.readline().strip()
             first_lines.append(s)
-
-        try:
-            file_handle.close()
-        except:
-            pass
+        f.close()
 
         header_info = parse_header(first_lines, "GT3X+_CSV", "")
 
         time = header_info["start_datetime"]
         epoch_length = header_info["epoch_length"]
 
-        file_handle = archive.open(filename)
-        timestamps = np.genfromtxt(file_handle, delimiter=',', converters={0: convert_actigraph_timestamp},
-                                   skip_header=11, usecols=(0))
+        timestamps = np.genfromtxt(source, delimiter=',', converters={0:convert_actigraph_timestamp}, skip_header=11, usecols=(0))
 
-        file_handle = archive.open(filename)
-        x, y, z = np.genfromtxt(file_handle, delimiter=',', skip_header=11, usecols=(1, 2, 3), unpack=True)
+        x,y,z = np.genfromtxt(source, delimiter=',', skip_header=11, usecols=(1,2,3), unpack=True)
+
 
         x_chan = Channel("X")
         y_chan = Channel("Y")
@@ -752,14 +739,51 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         y_chan.set_contents(y, timestamps)
         z_chan.set_contents(z, timestamps)
 
-        channels = [x_chan, y_chan, z_chan]
+        for c in [x_chan, y_chan, z_chan]:
+            c.frequency = header_info["frequency"]
 
+
+        channels = [x_chan,y_chan,z_chan]
         header = header_info
-        header["start_time"] = str(header["start_time"])
-        header["epoch_length"] = str(header["epoch_length"])
-        header["start_date"] = header["start_date"].strftime("%Y-%m-%d %H:%M:%S")
-        header["start_datetime"] = header["start_datetime"].strftime("%Y-%m-%d %H:%M:%S")
 
+    elif (source_type == "GT3X+_CSV_ZIP"):
+
+        filename = source.split("/")[-1].replace(".zip", ".csv")
+        archive = zipfile.ZipFile(source)
+        file_handle = archive.open(filename)
+
+        first_lines = []
+        for i in range(0,10):
+            s = file_handle.readline().strip().decode("utf-8")
+            #print(s)
+            first_lines.append(s)
+
+        #print(first_lines)
+
+        header_info = parse_header(first_lines, "GT3X+_CSV", "")
+
+        time = header_info["start_datetime"]
+        epoch_length = header_info["epoch_length"]
+
+        file_handle = archive.open(filename)
+        timestamps = np.genfromtxt(file_handle, delimiter=',', converters={0:convert_actigraph_timestamp}, skip_header=11, usecols=(0))
+
+
+        file_handle = archive.open(filename)
+        x,y,z = np.genfromtxt(file_handle, delimiter=',', skip_header=11, usecols=(1,2,3), unpack=True)
+
+
+
+        x_chan = Channel("X")
+        y_chan = Channel("Y")
+        z_chan = Channel("Z")
+
+        x_chan.set_contents(x, timestamps)
+        y_chan.set_contents(y, timestamps)
+        z_chan.set_contents(z, timestamps)
+
+        channels = [x_chan,y_chan,z_chan]
+        header = header_info
 
     elif (source_type == "CSV"):
 

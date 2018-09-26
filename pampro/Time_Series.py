@@ -272,6 +272,61 @@ class Time_Series(object):
             axis.set_xlim(axis_xlim)
 
             for c in channels:
+                self.get_channel(c).draw(axis, time_period=axis_xlim)
+
+            handles, labels = axis.get_legend_handles_labels()
+            by_label = OrderedDict(zip(labels, handles))
+            legend = axis.legend(by_label.values(), by_label.keys(), loc='upper right')
+            legend.get_frame().set_linewidth(0.0)
+            axis.grid()
+
+        fig.tight_layout()
+
+        if file_target==False:
+            return fig
+        else:
+            plt.savefig(file_target, dpi=300, frameon=False, facecolor='#FFFFFF')
+            plt.close("all")
+    
+    
+    def draw_qc(self, channel_combinations, time_period=False, file_target=False, width=6.3, height=4.35):
+
+        try:
+            rcParams['font.size'] = '8'
+
+            rcParams['legend.frameon'] = True
+            rcParams['legend.fontsize'] = "x-small"
+            rcParams['legend.labelspacing'] = 0.1
+
+            rcParams['xtick.labelsize'] = "x-small"
+            rcParams['ytick.labelsize'] = "x-small"
+
+            rcParams['grid.linewidth'] = 0.2
+
+            rcParams['figure.dpi'] = 300
+            rcParams['figure.facecolor'] = "white"
+
+            rcParams['axes.linewidth'] = 0.25
+            rcParams['legend.framealpha'] = 0.7
+
+        except:
+            print("Encountered an error whilst customising the appearance of charts. This may be because you are running an outdated version of matplotlib.")
+
+        fig = plt.figure(figsize=(width,height), frameon=False)
+        fig.patch.set_facecolor('#FFFFFF')
+
+        if time_period == False:
+            axis_xlim = (self.earliest, self.latest)
+        else:
+            axis_xlim = (time_period[0], time_period[1])
+
+        axes = [fig.add_subplot(len(channel_combinations), 1, 1+index) for index in range(len(channel_combinations))]
+
+        for channels, axis in zip(channel_combinations, axes):
+
+            axis.set_xlim(axis_xlim)
+
+            for c in channels:
                 channel = self.get_channel(c)
                 if len(channels) == 1:
                     axis.set_ylim(channel.minimum, channel.maximum)
