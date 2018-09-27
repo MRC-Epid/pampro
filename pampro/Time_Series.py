@@ -320,16 +320,25 @@ class Time_Series(object):
         else:
             axis_xlim = (time_period[0], time_period[1])
 
-        axes = [fig.add_subplot(len(plotting_df.index), 1, 1+index) for index in range(len(plotting_df.index))]
+        num = len(plotting_df.index)
         
-        for axis in axes:
+        for x in range(num):
+            
+            axis = fig.add_subplot(num, 1, 1+x)
+        
+        
+        #axes = [fig.add_subplot(len(plotting_df.index), 1, 1+index) for index in range(len(plotting_df.index))]
+        
+       # for axis in axes:
 
             axis.set_xlim(axis_xlim)
 
-            for index in plotting_df.index:
-                channel = self.get_channel(plotting_df.at[index,'channel_name'])
-                axis.set_ylim(plotting_df.at[index,'channel_min'], plotting_df.at[index,'channel_max'])
-                channel.draw(axis, time_period=axis_xlim)
+            #for index in plotting_df.index:
+                
+            channel = self.get_channel(plotting_df.at[x,'channel_name'])
+                #if index == 0:
+            axis.set_ylim(plotting_df.at[x,'channel_min'], plotting_df.at[x,'channel_max'])
+            channel.draw(axis, time_period=axis_xlim)
 
             handles, labels = axis.get_legend_handles_labels()
             by_label = OrderedDict(zip(labels, handles))
