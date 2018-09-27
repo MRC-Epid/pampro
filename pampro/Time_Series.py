@@ -322,7 +322,7 @@ class Time_Series(object):
 
         axes = [fig.add_subplot(len(plotting_df.index), 1, 1+index) for index in range(len(plotting_df.index))]
         
-        for index_range, axis in zip (range(len(plotting_df.index)), axes):
+        for axis in axes:
 
             axis.set_xlim(axis_xlim)
 
