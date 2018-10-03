@@ -1947,11 +1947,12 @@ def fast_load(source, source_type):
 
     first_timestamp = ts.earliest.strftime("%d/%m/%Y %H:%M:%S:%f")
     last_timestamp = ts.latest.strftime("%d/%m/%Y %H:%M:%S:%f")
-
-    header["QC_num_channels"] = ts.number_of_channels
     header["QC_first_timestamp"] = first_timestamp
     header["QC_last_timestamp"] = last_timestamp
-    header["QC_file_duration"] = timedelta(seconds=int(last_timestamp - first_timestamp))
+    header["QC_num_channels"] = ts.number_of_channels
+    
+    file_duration = ts.latest - ts.earliest
+    header["QC_file_duration"] = file_duration.total_seconds()
     header["QC_num_samples"] = len(ts.channels[0].data)
     header["QC_loading_time_seconds"] = load_duration
     header["QC_processing_timestamp"] = load_start.strftime("%d/%m/%Y %H:%M:%S:%f")
