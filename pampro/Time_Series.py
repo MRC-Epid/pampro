@@ -325,18 +325,12 @@ class Time_Series(object):
         for x in range(num):
             
             axis = fig.add_subplot(num, 1, 1+x)
-        
-        
-        #axes = [fig.add_subplot(len(plotting_df.index), 1, 1+index) for index in range(len(plotting_df.index))]
-        
-       # for axis in axes:
 
             axis.set_xlim(axis_xlim)
-
-            #for index in plotting_df.index:
                 
+            print(plotting_df.at[x,'channel_name'])
+            
             channel = self.get_channel(plotting_df.at[x,'channel_name'])
-                #if index == 0:
             axis.set_ylim(plotting_df.at[x,'channel_min'], plotting_df.at[x,'channel_max'])
             channel.draw(axis, time_period=axis_xlim)
 
