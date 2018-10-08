@@ -842,6 +842,65 @@ class Channel(object):
 
         self.delete_windows([bout1, bout2])
 
+    def bouts_to_exclude(self, inclusion_value=0):
+        """ Return a list of bouts where data does not equal the inclusion value """
+        
+        # 0 indicates not currently in a bout, 1 indicates in a bout
+        state = 0
+
+        # start_index will be the variable that tracks the start of bouts
+        start_index = 0
+        # end_index will track the end
+        end_index = 1
+        bouts = []
+
+        for i, value in enumerate(self.data):
+            # If we're currently not in a bout
+            if state == 0:
+                # And
+                if value != inclusion_value:
+                    # Start a bout
+                    state = 1
+                    start_index = i
+                    end_index = i
+
+            # Else, we're currently in a bout
+            else:
+                # And
+                if value != inclusion_value:
+                    # So the bout expands to include this value
+                    end_index = i
+
+                # Else this value is included
+                else:
+                    # So we end the bout at the previous value
+                    state = 0
+
+                    start_time =  self.timestamps[start_index]
+                    end_time = self.timestamps[end_index]
+                    if end_index+1 < self.size:
+                        end_time = self.timestamps[end_index+1]
+
+                    bouts.append(Bout(start_time, end_time))
+
+        # Bout finishes at end of file
+        if state == 1:
+            start_time = self.timestamps[start_index]
+            end_time = self.timestamps[end_index]
+
+            #if not self.sparsely_timestamped:
+            #end_time += self.timestamps[-1]-self.timestamps[-2]
+
+            bouts.append(Bout(start_time, end_time))
+
+        if self.timestamp_policy == "offset":
+            for b in bouts:
+                b.start_timestamp = self.time_period[0]+timedelta(microseconds=1000)*b.start_timestamp
+                b.end_timestamp = self.time_period[0]+timedelta(microseconds=1000)*b.end_timestamp
+                b.length = b.end_timestamp - b.start_timestamp
+
+        return bouts
+
     def fill(self, bout, fill_value=0):
         """ Given a Bout representing a window of time, replace all the data values of this Channel within the time window with a given fill_value. """
 

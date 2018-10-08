@@ -1647,7 +1647,6 @@ def fast_load(source, source_type):
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
-        channel_validity = Channel("Validity")
 
         raw_bytes = handle.read()
         fh = io.BytesIO(raw_bytes)
@@ -1669,7 +1668,6 @@ def fast_load(source, source_type):
         axivity_battery = np.empty(estimated_num_pages)
         axivity_timestamps = np.empty(estimated_num_pages, dtype=type(start))
         axivity_indices = np.empty(estimated_num_pages)
-        axivity_validity = np.empty(estimated_num_pages)
 
         file_header = OrderedDict()
         file_header = parse_axivity_header(source)
@@ -1697,112 +1695,126 @@ def fast_load(source, source_type):
                 elif header == b'AX':
                     #print('AX')
 
-                    packet = axivity_read(fh, 510)
+                    packetLength = unpack('<H', axivity_read(fh, 2))[0]                        # @ 2  +2   Packet length (508 bytes, with header (4) = 512 bytes total)
+                    # check the remainging packet length is equal to 508 bytes
+                    if packetLength == 508:
                     
-                    packetLength, deviceId, sessionId, sequenceId, sampleTimeData, light, temperature, events, battery, sampleRate, numAxesBPS, timestampOffset, sampleCount = unpack('HHIIIHHcBBBhH', packet[0:28])
-                    
-                    sector = b'AX' + packet
-                    
-                    sector_checksum = checksum(sector)
+                        # then read the packet into memory
+                        packet = axivity_read(io.BytesIO(axivity_read(fh, 508))
+                
+                        # calculate the checksum of the packet, only 'pass' the data if checksum = 0
+                        if checksum(packet) == 0:
+                            
+                            deviceId = unpack('<H', packet[0:2])[0]                # @ 4  +2   Top bit set: 15-bit fraction of a second for the time stamp, the timestampOffset was already adjusted to minimize this assuming ideal sample rate; Top bit clear: 15-bit device identifier, 0 = unknown;
+                            sessionId = unpack('<I',packet[2:6])[0]            # @ 6  +4   Unique session identifier, 0 = unknown
+                            
+                            # check that the sessionID of the packet matches the session Id from the file meta data
+                            if sessionId == file_session_id:
+                            
+                                sequenceId = unpack('<I', packet[6:10])[0]            # @10  +4   Sequence counter (0-indexed), each packet has a new number (reset if restarted)
+                                sampleTimeData = read_timestamp(packet[10:14])                    # @14  +4   Last reported RTC value, 0 = unknown
+                                light = unpack('<H', packet[14:16])[0]                        # @18  +2   Last recorded light sensor value in raw units, 0 = none
+                                temperature = unpack('<H', packet[16:18])[0]        # @20  +2   Last recorded temperature sensor value in raw units, 0 = none
+                                # events = unpack('B', packet[18:19])[0]                # @22  +1   Event flags since last packet, b0 = resume logging, b1 = reserved for single-tap event, b2 = reserved for double-tap event, b3 = reserved, b4 = reserved for diagnostic hardware buffer, b5 = reserved for diagnostic software buffer, b6 = reserved for diagnostic internal flag, b7 = reserved)
+                                battery = unpack('B', packet[19:20])[0]            # @23  +1   Last recorded battery level in raw units, 0 = unknown
+                                rateCode = unpack('B', packet[20:21])[0]                        # @24  +1   Sample rate code, frequency (3200/(1<<(15-(rate & 0x0f)))) Hz, range (+/-g) (16 >> (rate >> 6)).
+                                numAxesBPS = unpack('B', packet[21:22])[0]                    # @25  +1   0x32 (top nibble: number of axes = 3; bottom nibble: packing format - 2 = 3x 16-bit signed, 0 = 3x 10-bit signed + 2-bit exponent)
+                                timestampOffset = unpack('<h', packet[22:24])[0]                # @26  +2   Relative sample index from the start of the buffer where the whole-second timestamp is valid
+                                sampleCount = unpack('<H', packet[24:26])[0]            # @28  +2   Number of accelerometer samples (80 or 120 if this sector is full)
 
-                    if packetLength != 508 or sampleRate == 0:
-                        continue
+                                if ((numAxesBPS >> 4) & 15) != 3:
+                                    print('[ERROR: Axes!=3 not supported yet -- this will not work properly]')
 
-                    if ((numAxesBPS >> 4) & 15) != 3:
-                        print('[ERROR: Axes!=3 not supported yet -- this will not work properly]')
+                                if (light & 0xfc00) != 0:
+                                    print('[ERROR: Scale not supported yet -- this will not work properly]')
 
-                    if (light & 0xfc00) != 0:
-                        print('[ERROR: Scale not supported yet -- this will not work properly]')
+                                if (numAxesBPS & 15) == 2:
+                                    bps = 6
+                                elif (numAxesBPS & 15) == 0:
+                                    bps = 4
 
-                    if (numAxesBPS & 15) == 2:
-                        bps = 6
-                    elif (numAxesBPS & 15) == 0:
-                        bps = 4
+                                freq = 3200 / (1 << (15 - sampleRate & 15))
+                                if freq <= 0:
+                                    freq = 1
 
-                    freq = 3200 / (1 << (15 - sampleRate & 15))
-                    if freq <= 0:
-                        freq = 1
+                                timestamp_original = axivity_read_timestamp_raw(sampleTimeData)
 
-                    timestamp_original = axivity_read_timestamp_raw(sampleTimeData)
-
-                    if timestamp_original is None:
-                        continue
+                                if timestamp_original is None:
+                                    continue
 
 
-                    # if top-bit set, we have a fractional date
-                    if deviceId & 0x8000:
-                        # Need to undo backwards-compatible shim by calculating how many whole samples the fractional part of timestamp accounts for.
-                        timeFractional = (
-                                             deviceId & 0x7fff) * 2  # use original deviceId field bottom 15-bits as 16-bit fractional time
-                        timestampOffset += (timeFractional * int(
-                            freq)) // 65536  # undo the backwards-compatible shift (as we have a true fractional)
-                        timeFractional = float(timeFractional) / 65536
+                                # if top-bit set, we have a fractional date
+                                if deviceId & 0x8000: # Need to undo backwards-compatible shim by calculating how many whole samples the fractional part of timestamp accounts for.
+                                    timeFractional = (deviceId & 0x7fff) * 2  # use original deviceId field bottom 15-bits as 16-bit fractional time
+                                    timestampOffset += (timeFractional * int(freq)) // 65536  # undo the backwards-compatible shift (as we have a true fractional)
+                                    timeFractional = float(timeFractional) / 65536
+            
+                                    # Add fractional time to timestamp
+                                    timestamp = timestamp_original + timedelta(seconds=timeFractional)
+            
+                                else:
+            
+                                    timestamp = timestamp_original
+            
+                                # --- Time interpolation ---
+                                # Reset interpolator if there's a sequence break or there was no previous timestamp
+                                if lastSequenceId == None or (lastSequenceId + 1) & 0xffff != sequenceId or lastTimestampOffset == None or lastTimestamp == None:
+                                    # Bootstrapping condition is a sample one second ago (assuming the ideal frequency)
+                                    lastTimestampOffset = timestampOffset - freq
+                                    lastTimestamp = timestamp - timedelta(seconds=1)
+                                    lastSequenceId = sequenceId - 1
+            
+                                localFreq = timedelta(seconds=(timestampOffset - lastTimestampOffset)) / (timestamp - lastTimestamp)
+                                final_timestamp = timestamp + -timedelta(seconds=timestampOffset) / localFreq
+                                print("final timestamp ", final_timestamp)
+            
+                                # Update for next loop
+                                lastSequenceId = sequenceId
+                                lastTimestampOffset = timestampOffset - sampleCount
+                                lastTimestamp = timestamp
+            
+                                axivity_indices[num_pages] = num_pages
+                                axivity_timestamps[num_pages] = final_timestamp
+                                num_pages += 1
+            
+                                # convert the light and temperature values to lux and degrees C values
+                                light_converted = convert_axivity_light(light)
+                                temp_converted = convert_axivity_temp(temperature)
+                                axivity_light[num_pages] = light_converted
+                                axivity_temperature[num_pages] = temp_converted
+                                axivity_battery[num_pages] = battery
+            
+                                sampleData = packet[26:508]
+            
+                                if bps == 6:
+            
+                                    x, y, z = unpack('hhh', sampleData.read(6))
+                                    x, y, z = x / 256.0, y / 256.0, z / 256.0
+            
+                                elif bps == 4:
+            
+                                    temp = unpack('I', sampleData.read(4))[0]
+                                    temp2 = (6 - byte(temp >> 30))
+                                    x = short(short((ushort(65472) & ushort(temp << 6))) >> temp2) / 256.0
+                                    y = short(short((ushort(65472) & ushort(temp >> 4))) >> temp2) / 256.0
+                                    z = short(short((ushort(65472) & ushort(temp >> 14))) >> temp2) / 256.0
+            
+                                # save only the first values of x,y,z
+                                axivity_x[num_pages] = x
+                                axivity_y[num_pages] = y
+                                axivity_z[num_pages] = z
+                                
+                            else:
+                                #pass
+                                print("session_id failed")
 
-                        # Add fractional time to timestamp
-                        timestamp = timestamp_original + timedelta(seconds=timeFractional)
 
-                    else:
+                        # if the checksum does not equal zero
+                        else:
+                            #pass
+                            print("checksum failed")
+                                
 
-                        timestamp = timestamp_original
-
-                    # --- Time interpolation ---
-                    # Reset interpolator if there's a sequence break or there was no previous timestamp
-                    if lastSequenceId == None or (
-                                lastSequenceId + 1) & 0xffff != sequenceId or lastTimestampOffset == None or lastTimestamp == None:
-                        # Bootstrapping condition is a sample one second ago (assuming the ideal frequency)
-                        lastTimestampOffset = timestampOffset - freq
-                        lastTimestamp = timestamp - timedelta(seconds=1)
-                        lastSequenceId = sequenceId - 1
-
-                    localFreq = timedelta(seconds=(timestampOffset - lastTimestampOffset)) / (timestamp - lastTimestamp)
-                    final_timestamp = timestamp + -timedelta(seconds=timestampOffset) / localFreq
-                    
-                    # Update for next loop
-                    lastSequenceId = sequenceId
-                    lastTimestampOffset = timestampOffset - sampleCount
-                    lastTimestamp = timestamp
-
-                    axivity_indices[num_pages] = num_pages
-                    axivity_timestamps[num_pages] = final_timestamp
-
-                    # check for data integrity:
-                    if sector_checksum == 0 and sessionId == file_session_id:    
-                        # if check passed then set 'validity' to '0' and extract the data
-                        # convert the light and temperature values to lux and degrees C values
-                        axivity_validity[num_pages] = 0
-                    elif sector_checksum != 0:
-                        # if integrity check fails on checksum, give validity value of '1'
-                        axivity_validity[num_pages] = 1
-                    elif sessionId != file_session_id:
-                        # if integrity check fails on session ID matching, give validity value of '2'
-                        axivity_validity[num_pages] = 2
-                        
-                    light_converted = convert_axivity_light(light)
-                    temp_converted = convert_axivity_temp(temperature)
-                    axivity_light[num_pages] = light_converted
-                    axivity_temperature[num_pages] = temp_converted
-                    axivity_battery[num_pages] = battery
-
-                    if bps == 6:
-
-                        x, y, z = unpack('hhh', packet[28:34])
-                        x, y, z = x / 256.0, y / 256.0, z / 256.0
-
-                    elif bps == 4:
-
-                        temp = unpack('I', packet[28:32])[0]
-                        temp2 = (6 - (temp >> 30))
-                        x = short(short((ushort(65472) & ushort(temp << 6))) >> temp2) / 256.0
-                        y = short(short((ushort(65472) & ushort(temp >> 4))) >> temp2) / 256.0
-                        z = short(short((ushort(65472) & ushort(temp >> 14))) >> temp2) / 256.0
-
-                    # save only the first values of x,y,z
-                    axivity_x[num_pages] = x
-                    axivity_y[num_pages] = y
-                    axivity_z[num_pages] = z
-                    
-                    num_pages += 1
-                    
                 else:
                     pass
                     #print("Unrecognised header", header)
@@ -1810,7 +1822,7 @@ def fast_load(source, source_type):
                 header = axivity_read(fh, 2)
 
                 n = n + 1
-                
+
         except IOError:
             # End of file
             pass
@@ -1824,7 +1836,6 @@ def fast_load(source, source_type):
         axivity_timestamps.resize(num_pages)
         axivity_indices.resize(num_pages)
         axivity_indices = axivity_indices.astype(int)
-        axivity_validity.resize(num_pages)
 
         axivity_x.resize(num_pages)
         axivity_y.resize(num_pages)
@@ -1837,7 +1848,6 @@ def fast_load(source, source_type):
         channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
         channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
         channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
-        channel_validity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
 
         file_header["num_pages"] = num_pages
 
@@ -1845,7 +1855,7 @@ def fast_load(source, source_type):
             c.indices = axivity_indices
             c.frequency = file_header["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_validity]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
         header = file_header
         try:
             handle.close()
@@ -1893,6 +1903,7 @@ def fast_load(source, source_type):
 
         # For each page
         for i in range(num_pages):
+            # xs,ys,zs,times = read_block(data, header_info)
             lines = [data.readline().strip().decode() for l in range(9)]
             page_time = datetime.strptime(lines[3][10:29],
                                           "%Y-%m-%d %H:%M:%S")  # + timedelta(microseconds=int(lines[3][30:])*1000)
