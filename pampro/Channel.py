@@ -282,7 +282,6 @@ class Channel(object):
         return (start,end)
 
 
-
     def get_data_index(self, datetimestamp):
         """
         Returns the indices of the data array to use if every observation is timestamped
@@ -349,6 +348,7 @@ class Channel(object):
                 except:
                     pass
 
+    
     def window_statistics(self, start_dts, end_dts, statistics):
         """ Summarise the data between these timestamps using the statistics listed. """
 
@@ -795,8 +795,11 @@ class Channel(object):
 
                     start_time =  self.timestamps[start_index]
                     end_time = self.timestamps[end_index]
-                    if end_index+1 < self.size:
-                        end_time = self.timestamps[end_index+1]
+                    if self.name == "Validity":
+                        pass
+                    else:
+                        if end_index+1 < self.size:
+                            end_time = self.timestamps[end_index+1]
 
                     bouts.append(Bout(start_time, end_time))
 
@@ -842,64 +845,6 @@ class Channel(object):
 
         self.delete_windows([bout1, bout2])
 
-    def bouts_to_exclude(self, inclusion_value=0):
-        """ Return a list of bouts where data does not equal the inclusion value """
-        
-        # 0 indicates not currently in a bout, 1 indicates in a bout
-        state = 0
-
-        # start_index will be the variable that tracks the start of bouts
-        start_index = 0
-        # end_index will track the end
-        end_index = 1
-        bouts = []
-
-        for i, value in enumerate(self.data):
-            # If we're currently not in a bout
-            if state == 0:
-                # And
-                if value != inclusion_value:
-                    # Start a bout
-                    state = 1
-                    start_index = i
-                    end_index = i
-
-            # Else, we're currently in a bout
-            else:
-                # And
-                if value != inclusion_value:
-                    # So the bout expands to include this value
-                    end_index = i
-
-                # Else this value is included
-                else:
-                    # So we end the bout at the previous value
-                    state = 0
-
-                    start_time =  self.timestamps[start_index]
-                    end_time = self.timestamps[end_index]
-                    if end_index+1 < self.size:
-                        end_time = self.timestamps[end_index+1]
-
-                    bouts.append(Bout(start_time, end_time))
-
-        # Bout finishes at end of file
-        if state == 1:
-            start_time = self.timestamps[start_index]
-            end_time = self.timestamps[end_index]
-
-            #if not self.sparsely_timestamped:
-            #end_time += self.timestamps[-1]-self.timestamps[-2]
-
-            bouts.append(Bout(start_time, end_time))
-
-        if self.timestamp_policy == "offset":
-            for b in bouts:
-                b.start_timestamp = self.time_period[0]+timedelta(microseconds=1000)*b.start_timestamp
-                b.end_timestamp = self.time_period[0]+timedelta(microseconds=1000)*b.end_timestamp
-                b.length = b.end_timestamp - b.start_timestamp
-
-        return bouts
 
     def fill(self, bout, fill_value=0):
         """ Given a Bout representing a window of time, replace all the data values of this Channel within the time window with a given fill_value. """
@@ -1029,4 +974,186 @@ def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skelet
         result.fill(bout, in_value)
 
     return result
+    
+    
+def diagnose_fix_anomalies(channels, window_size=timedelta(hours=2), diff_threshold_factor=2):
+    """ Examine the channels in 'channel_combinations' , diagnose and fix anomalies in the time series data.
+        
+        channels = list of  Channel objects, sharing common timestamps
+        window_size = time window to examine for each anomaly to see if the time series 'recovers'
+        diff_threshold_factor = scaling factor applied to difference between the normal difference between timestamps,/
+        to allow for variation and noise
+    """
 
+    for channel in channels:
+        if len(channel.data) == len(channels[0].data):
+            pass
+        else:
+            raise Exception("Channel data not the same length")
+            
+        if np.array_equiv(channel.timestamps, channels[0].timestamps):
+            pass
+        else:
+            raise Exception("Channel timestamps not equivalent")
+            
+    timestamps = channels[0].timestamps
+            
+    # difference between consecutive timestamps
+    diffs = np.diff(timestamps)
+    # ... in seconds
+    diffs_secs = [d.total_seconds() for d in diffs]
+
+    # create a difference threshold using the median of the absolute differences
+    normal_diff_secs = np.median(diffs_secs)
+    print(normal_diff_secs)
+    diff_threshold = normal_diff_secs*diff_threshold_factor
+    
+    # convert window size to integer number of samples, depending on frequency of signal
+    window_length = int(round(window_size.total_seconds()/normal_diff_secs))
+    
+    # create array of expected timestamps based on 'normal' difference
+    expected_timestamps = [timestamps[0] + timedelta(seconds=normal_diff_secs)*index for index in range(len(timestamps))]
+    
+    # discrepancy
+    discrepancy = timestamps - expected_timestamps
+    discrepancy_array = np.array([d.total_seconds() for d in abs(discrepancy)])
+    
+    anomalies = []
+    
+    ## IS THERE A DEVIATION FROM EXPECTED IN TIMESTAMPS ARRAY?
+    while max(discrepancy_array) > diff_threshold:
+        
+        # DEVIATION
+        start_index = np.where(discrepancy_array > diff_threshold)[0][0]    
+        end_index = start_index + window_length
+        
+        discrepancy_ahead = timestamps - expected_timestamps
+        discrepancy_behind = expected_timestamps - timestamps
+    
+        ahead = np.array([d.total_seconds() for d in (discrepancy_ahead)])
+        behind = np.array([d.total_seconds() for d in (discrepancy_behind)])
+        # make these absolute
+        ahead[ahead < 0] = 0
+        behind[behind < 0] = 0
+        
+        anomaly_def = {}
+        anomaly_def["last_good_index"] = start_index - 1
+        anomaly_def["last_good_timestamp"] = timestamps[start_index - 1].strftime("%Y-%m-%d %H:%M:%S")
+        
+        if min(discrepancy_array[start_index:end_index]) < diff_threshold:
+        # timeseries recovers to expected sequence - anomaly A or C
+            recovery_point = np.where(discrepancy_array[start_index:end_index] < diff_threshold)[0][0]
+            recovery_point += start_index
+            anomaly_def["recovery_point"] = recovery_point
+            anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S")
+        
+            if sum(ahead[start_index:recovery_point]) > sum(behind[start_index:recovery_point]):
+                anomaly_def["anomaly_type"] = "A"
+                
+            elif sum(ahead[start_index:recovery_point]) < sum(behind[start_index:recovery_point]):
+                anomaly_def["anomaly_type"] = "C"
+            
+            else:
+                anomaly_def["anomaly_type"] = "UNEXPECTED ANOMALY TYPE"
+                break
+    
+        else:
+            # timeseries does not recover to expected sequence - suspect anomaly B or D
+            if sum(ahead[start_index:end_index]) > sum(behind[start_index:end_index]):
+                # timeseries experiences an greater magnitude of "aheadedness" than "behindedness" - suspect anomaly "B"
+                
+                # check whether a 'behindness blip' could be masked by an overall forward systematic shift.
+                # check whether the beginning of the anomaly is more 'behind' than 'ahead' of expected 
+                if ahead[start_index] < behind[start_index]:
+                    # This indicates a "C" anomally followed by a systematic shift, deal with anomaly "C" first 
+                    # then expect to catch anomally "B" in following loop
+                    anomaly_def["anomaly_type"] = "C"
+                    # Find where the timeseries 'recovers' from being 'behind'
+                    recovery_point = np.where(behind[start_index:end_index] <= diff_threshold)[0][0]
+                    recovery_point += start_index
+                    anomaly_def["recovery_point"] = recovery_point
+                    anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S")
+                
+                else:
+                    # beginning of anomlay is more 'ahead' than 'behind' so confirms anomaly "B"
+                    anomaly_def["anomaly_type"] = "B"       
+            
+            elif sum(ahead[start_index:end_index]) < sum(behind[start_index:end_index]):
+                # timeseries experiences an greater magnitude of "behindedness" than "aheadedness" - suspect anomaly "D"
+                
+                if min(behind[start_index:end_index]) > diff_threshold:
+                    # timeseries does not recover its "behindedness" - confirms anomaly "D"
+                    anomaly_def["anomaly_type"] = "D"
+                    
+                else:
+                    # timeseries recovers its "behindedness" but not to expected sequence
+                    # (probably a forward systematic shift has occured after a short-term backwards 'blip'), so treat as anomaly type "C"
+                    anomaly_def["anomaly_type"] = "C"
+                    # Find where the timeseries 'recovers' from being 'behind'
+                    recovery_point = np.where(behind[start_index:end_index] <= diff_threshold)[0][0]
+                    recovery_point += start_index
+                    anomaly_def["recovery_point"] = recovery_point
+                    anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S")
+            
+            else:
+                anomaly_def["anomaly_type"] = "UNEXPECTED ANOMALY TYPE"
+                break
+            
+        channels, expected_timestamps = fix_anomaly(anomaly_def, channels, expected_timestamps)
+        anomalies.append(anomaly_def)
+        
+        timestamps = channels[0].timestamps
+        
+        # recalculate discrepancy for next loop
+        discrepancy = timestamps - expected_timestamps
+        discrepancy_array = np.array([d.total_seconds() for d in abs(discrepancy)])
+    
+    return anomalies
+
+
+
+def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111):
+    """ Performs a 'fix' on a anomaly, given the anomaly definition"""
+    
+    last_good_index = anomaly_def["last_good_index"]
+    
+    if anomaly_def["anomaly_type"] == "A" or anomaly_def["anomaly_type"] == "C":
+        recovery_point = anomaly_def["recovery_point"]
+        for channel in channels:
+            for i in range(last_good_index + 1,recovery_point, 1):
+                channel.data[i] = missing_value
+                channel.timestamps[i] = expected_timestamps[i]
+            
+    elif anomaly_def["anomaly_type"] == "B":
+        
+        timestamps = np.array(channels[0].timestamps, copy=True)
+        
+        first_bad_timestamp = timestamps[last_good_index+1]
+        last_good_timestamp = timestamps[last_good_index]
+        
+        normal_time_diff = timestamps[last_good_index-1] - timestamps[last_good_index-2]
+        time_jump = first_bad_timestamp - last_good_timestamp - normal_time_diff
+
+        a = last_good_timestamp + timedelta(microseconds=10)
+        b = first_bad_timestamp - timedelta(microseconds=10)
+        
+        # insert a timestamp just after last_good_index and another just before last_good_index+1
+        timestamps = np.insert(timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps = np.insert(expected_timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps[last_good_index + 3:] += time_jump
+        
+        #insert missing_value into each channel to align with these new timestamps, and update timestamp arrays
+        for channel in channels:
+            channel.data = np.insert(channel.data, last_good_index+1, np.array([missing_value,missing_value]))
+            channel.timestamps = timestamps
+            
+    
+    elif anomaly_def["anomaly_type"] == "D":
+        # truncate each channel data after last good index 
+        for channel in channels:
+            channel.data = channel.data[:last_good_index+1]
+            channel.timestamps = channel.timestamps[:last_good_index+1]
+            
+        expected_timestamps = expected_timestamps[:last_good_index+1]
+            
+    return channels, expected_timestamps

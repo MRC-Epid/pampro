@@ -402,3 +402,4 @@ class Time_Series(object):
         plt.savefig(file_target, dpi=300, frameon=False, facecolor='#FFFFFF')
         plt.close("all")
 
+

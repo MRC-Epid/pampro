@@ -842,11 +842,9 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
+        channel_validity = Channel("Validity")
 
         raw_bytes = handle.read()
-        # print("Number of bytes:", len(raw_bytes))
-        # print("/512 = ", len(raw_bytes)/512)
-
         fh = io.BytesIO(raw_bytes)
 
         n = 0
@@ -870,9 +868,16 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         axivity_battery = np.empty(estimated_num_pages)
         axivity_timestamps = np.empty(estimated_num_pages, dtype=type(start))
         axivity_indices = np.empty(estimated_num_pages)
+        axivity_validity = np.empty(estimated_num_pages)
 
         file_header = OrderedDict()
         file_header = parse_axivity_header(source)
+
+        # extract the following from the header to use as fail-safe measures later on:
+        # preserve the 'file_session_id'
+        file_session_id = file_header['session_id']
+        # preserve the 'first_sample_count'
+        first_sample_count = file_header['first_sample_count']
 
         lastSequenceId = None
         lastTimestampOffset = None
@@ -894,14 +899,21 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                     pass
                 elif header == b'AX':
 
-                    packetLength, deviceId, sessionId, sequenceId, sampleTimeData, light, temperature, events, battery, sampleRate, numAxesBPS, timestampOffset, sampleCount = unpack(
-                        'HHIIIHHcBBBhH', axivity_read(fh, 28))
+                    packet = axivity_read(fh, 510)
+                    
+                    packetLength, deviceId, sessionId, sequenceId, sampleTimeData, light, temperature, events, battery, sampleRate, numAxesBPS, timestampOffset, sampleCount = unpack('HHIIIHHcBBBhH', packet[0:28])
+                    
+                    # sector is equal to packet plus sector header
+                    sector = b'AX' + packet
+                    
+                    #calculate the checksum of the data sector
+                    sector_checksum = checksum(sector)
 
                     if packetLength != 508 or sampleRate == 0:
                         continue
 
                     if ((numAxesBPS >> 4) & 15) != 3:
-                        print('[ERROR: num-axes not expected]')
+                        print('[ERROR: Axes!=3 not supported yet -- this will not work properly]')
 
                     if (numAxesBPS & 15) == 2:
                         bps = 6
@@ -920,8 +932,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                     # if top-bit set, we have a fractional date
                     if deviceId & 0x8000:
                         # Need to undo backwards-compatible shim by calculating how many whole samples the fractional part of timestamp accounts for.
-                        timeFractional = (
-                                             deviceId & 0x7fff) * 2  # use original deviceId field bottom 15-bits as 16-bit fractional time
+                        timeFractional = (deviceId & 0x7fff) * 2  # use original deviceId field bottom 15-bits as 16-bit fractional time
                         timestampOffset += (timeFractional * int(
                             freq)) // 65536  # undo the backwards-compatible shift (as we have a true fractional)
                         timeFractional = float(timeFractional) / 65536
@@ -935,8 +946,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
                     # --- Time interpolation ---
                     # Reset interpolator if there's a sequence break or there was no previous timestamp
-                    if lastSequenceId == None or (
-                                lastSequenceId + 1) & 0xffff != sequenceId or lastTimestampOffset == None or lastTimestamp == None:
+                    if lastSequenceId == None or (lastSequenceId + 1) & 0xffff != sequenceId or lastTimestampOffset == None or lastTimestamp == None:
                         # Bootstrapping condition is a sample one second ago (assuming the ideal frequency)
                         lastTimestampOffset = timestampOffset - freq
                         lastTimestamp = timestamp - timedelta(seconds=1)
@@ -952,8 +962,18 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
                     axivity_indices[num_pages] = num_samples
                     axivity_timestamps[num_pages] = final_timestamp
-                    num_pages += 1
-
+                    
+                    # check for data integrity:
+                    if sector_checksum == 0 and sessionId == file_session_id:    
+                        # if check passed then set 'validity' to '0' and extract the data
+                        axivity_validity[num_pages] = 0
+                    # if integrity check fails on checksum, set 'validity' to '1'
+                    elif sector_checksum != 0:    
+                        axivity_validity[num_pages] = 1
+                    # if integrity check fails on session id matching, set 'validity value' to '2'                   
+                    elif sessionId != file_session_id:
+                        axivity_validity[num_pages] = 2
+                    
                     # convert the light and temperature values to lux and degrees C values
                     light_converted = convert_axivity_light(light)
                     temp_converted = convert_axivity_temp(temperature)
@@ -962,29 +982,27 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                     axivity_battery[num_pages] = battery
 
                     for sample in range(sampleCount):
-
-                        if bps == 6:
-
-                            x, y, z = unpack('hhh', fh.read(6))
-                            x, y, z = x / 256.0, y / 256.0, z / 256.0
-
-                        elif bps == 4:
-
-                            temp = unpack('I', fh.read(4))[0]
-                            temp2 = (6 - byte(temp >> 30))
+                        # index for the bytes per sample, depending on bytesPerSample(bps)                        
+                        i = 28 + (sample * bps)
+                    
+                        if bps == 4:
+                            temp = unpack('I', packet[i:(i+4)])[0]
+                            temp2 = (6 - (temp >> 30))
                             x = short(short((ushort(65472) & ushort(temp << 6))) >> temp2) / 256.0
                             y = short(short((ushort(65472) & ushort(temp >> 4))) >> temp2) / 256.0
                             z = short(short((ushort(65472) & ushort(temp >> 14))) >> temp2) / 256.0
 
-                            # Optimisation: cache value of ushort(65472) ?
+                        elif bps == 6:
+                            x, y, z = unpack('hhh', packet[i:(i+6)])
+                            x, y, z = x / 256.0, y / 256.0, z / 256.0
 
                         axivity_x[num_samples] = x
                         axivity_y[num_samples] = y
                         axivity_z[num_samples] = z
 
                         num_samples += 1
-
-                    checksum = unpack('H', axivity_read(fh, 2))[0]
+                                    
+                    num_pages += 1
 
                 else:
                     pass
@@ -1006,12 +1024,14 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         axivity_battery.resize(num_pages)
         axivity_timestamps.resize(num_pages)
         axivity_indices.resize(num_pages)
+        axivity_validity.resize(num_pages)
         axivity_indices = axivity_indices.astype(int)
 
         # Map the page-level timestamps to the temperature, battery and light data
         channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
         channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
         channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
+        channel_validity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
 
         axivity_x.resize(num_samples)
         axivity_y.resize(num_samples)
@@ -1031,7 +1051,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             c.indices = axivity_indices
             c.frequency = file_header["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_validity]
         header = file_header
         try:
             handle.close()
@@ -1767,16 +1787,19 @@ def fast_load(source, source_type):
 
                     # check for data integrity:
                     if sector_checksum == 0 and sessionId == file_session_id:    
-                        # if check passed then set 'validity' to '0' and extract the data
-                        # convert the light and temperature values to lux and degrees C values
+                        # if check passed then set 'validity' to '0'
                         axivity_validity[num_pages] = 0
+                    
                     elif sector_checksum != 0:
                         # if integrity check fails on checksum, give validity value of '1'
                         axivity_validity[num_pages] = 1
+                    
                     elif sessionId != file_session_id:
                         # if integrity check fails on session ID matching, give validity value of '2'
                         axivity_validity[num_pages] = 2
                         
+                        
+                    # convert the light and temperature values to lux and degrees C values
                     light_converted = convert_axivity_light(light)
                     temp_converted = convert_axivity_temp(temperature)
                     axivity_light[num_pages] = light_converted
