@@ -23,20 +23,28 @@ pampro is a software project for the systematic analysis of physical activity da
 ### Features
 
 * Import channels of time series data from a variety of common monitors:
+	
 	* ActiHeart (.txt)
 	* Axivity binary (.cwa)
 	* GeneActiv (.bin)
 	* Actigraph (.dat)
 	* activPAL & activPAL micro binary (.datx)
 	* Any timestamped data (.csv)
+
 * Output piecewise summary statistics of any data channel, over any size time window:
+	
 	* Time spent in any cutpoint.
 	* Sum, mean, percentiles, min, max.
+
 * Visualise the time series data.
+
 * Extract bouts of activity in any cutpoint.
+
 * Various triaxial acceleration methodologies:
+	
 	* Nonwear detection.
 	* Autocalibration.
+
 * Conversion of raw waveform files to HDF5 files (see below).
 
 ### The use of [HDF5](https://www.hdfgroup.org/HDF5/)
