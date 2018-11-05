@@ -317,14 +317,15 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         timestamp_length = len(timestamps)
 
         # set attributes for the first group only
-        if group_number == 1:
-            for k, v in file_header.items():
-                if k is not "start_datetime_python":
-                    group.attrs[k] = v 
-                else:
-                    pass
-        else:
-            pass
+        if file_header is not None:
+            if group_number == 1:
+                for k, v in file_header.items():
+                    if k is not "start_datetime_python":
+                        group.attrs[k] = v 
+                    else:
+                        pass
+            else:
+                pass
 
         group.attrs["start"] = first_channel.time_period[0].strftime("%d/%m/%Y %H:%M:%S")
 

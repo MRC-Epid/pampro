@@ -15,6 +15,7 @@ import zipfile
 from collections import OrderedDict
 import h5py
 from itertools import chain
+import json 
 
 from .Channel import *
 from .Bout import *
@@ -22,6 +23,7 @@ from .Time_Series import *
 from .time_utilities import *
 from .pampro_utilities import *
 from .hdf5 import *
+from .diagnostics import *
 
 # CWA Metadata Reader by Dan Jackson, 2017.
 # Source: https://github.com/digitalinteraction/openmovement/tree/master/Software/AX3/cwa-convert/python
@@ -367,9 +369,9 @@ def convert_actigraph_timestamp(t):
 
 
 def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", datetime_column=0, ignore_columns=False,
-         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None):
+         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None, anomaly_folder=None):
     load_start = datetime.now()
-
+    
     header = OrderedDict()
     channels = []
     ts = Time_Series("")
@@ -1081,7 +1083,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         num_pages = int(header_info["number_pages"])
         obs_num = 0
-        ts_num = 0
+        #ts_num = 0
         page = 0
         # Data format contains 300 XYZ values per page
         num = 300
@@ -1091,14 +1093,16 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         light_values = np.empty(int(num_pages))
         temperature_values = np.empty(int(num_pages))
         battery_values = np.empty(int(num_pages))
+        ga_indices = np.empty(int(num_pages))
 
         # We will timestamp every 1 second of data to the nearest second
         # 300 / frequency = number of timestamps per page
-        timestamps_per_page = int(num / header_info["frequency"])
-        num_timestamps = (timestamps_per_page * header_info["number_pages"]) + 1
+        #timestamps_per_page = int(num / header_info["frequency"])
+        #num_timestamps = (timestamps_per_page * header_info["number_pages"]) + 1
 
-        ga_timestamps = np.empty(int(num_timestamps), dtype=type(header_info["start_datetime_python"]))
-        ga_indices = np.empty(int(num_timestamps))
+        #ga_timestamps = np.empty(int(num_timestamps), dtype=type(header_info["start_datetime_python"]))
+        #ga_indices = np.empty(int(num_timestamps))
+        
 
         # we want a timestamp for each page to assign to the light, temperature and battery data
         page_timestamps = np.empty(int(num_pages), dtype=type(header_info["start_datetime_python"]))
@@ -1108,25 +1112,27 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             # xs,ys,zs,times = read_block(data, header_info)
             lines = [data.readline().strip().decode() for l in range(9)]
             page_time = datetime.strptime(lines[3][10:29],
-                                          "%Y-%m-%d %H:%M:%S")  # + timedelta(microseconds=int(lines[3][30:])*1000)
+                                          "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
             page_timestamps[page] = page_time
+            ga_indices[page] = obs_num
 
             # read temperature, for page, in degrees C
             temperature = lines[5].split(":")[1]
             # read battery voltage for page
+            
             battery = lines[6].split(":")[1]
 
-            ga_timestamps[ts_num] = page_time
-            ga_indices[ts_num] = obs_num
+            #ga_timestamps[ts_num] = page_time
+            #ga_indices[ts_num] = obs_num
 
             # record temperature and battery at page level
             temperature_values[page] = temperature
             battery_values[page] = battery
 
-            for k in range(timestamps_per_page):
-                ga_timestamps[ts_num + 1] = page_time + (timedelta(seconds=1) * (k + 1))
-                ga_indices[ts_num + 1] = obs_num + (int(header_info["frequency"]) * (k + 1))
-                ts_num += 1
+            #for k in range(timestamps_per_page):
+                #ga_timestamps[ts_num + 1] = page_time + (timedelta(seconds=1) * (k + 1))
+                #ga_indices[ts_num + 1] = obs_num + (int(header_info["frequency"]) * (k + 1))
+                #ts_num += 1
 
             # For each 12 byte measurement in page (300 of them)
             for j in range(num):
@@ -1162,8 +1168,8 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             page += 1
 
         # Timestamp the final observation
-        ga_timestamps[-1] = page_time + (num * (timedelta(seconds=1) / header_info["frequency"]))
-        ga_indices[-1] = obs_num
+        #ga_timestamps[-1] = page_time + (num * (timedelta(seconds=1) / header_info["frequency"]))
+        #ga_indices[-1] = obs_num
         ga_indices = ga_indices.astype(int)
 
         # calibrate the x, y, z and light data using the monitor's given calibration parameters.
@@ -1173,9 +1179,12 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         light_values = np.array([(light * header_info["lux"]) / header_info["volts"] for light in light_values])
 
         # Map the second-level timestamps to the acceleration data "sparsely"
-        channel_x.set_contents(x_values, ga_timestamps, timestamp_policy="sparse")
-        channel_y.set_contents(y_values, ga_timestamps, timestamp_policy="sparse")
-        channel_z.set_contents(z_values, ga_timestamps, timestamp_policy="sparse")
+        #channel_x.set_contents(x_values, ga_timestamps, timestamp_policy="sparse")
+        #channel_y.set_contents(y_values, ga_timestamps, timestamp_policy="sparse")
+        #channel_z.set_contents(z_values, ga_timestamps, timestamp_policy="sparse")
+        channel_x.set_contents(x_values, page_timestamps, timestamp_policy="sparse")
+        channel_y.set_contents(y_values, page_timestamps, timestamp_policy="sparse")
+        channel_z.set_contents(z_values, page_timestamps, timestamp_policy="sparse")
 
         # Map the page-level timestamps to the temperature, battery and light data "normally"
         channel_temperature.set_contents(temperature_values, page_timestamps, timestamp_policy="normal")
@@ -1259,8 +1268,32 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                     header["hdf5_file"] = f
 
 
+    # Check for an anomalies JSON file corresponding to this data file, read in the file to a list of dictionaries if it exists
+    anomalies = []
+    if anomaly_folder is not None:    
+        anomaly_filename = anomaly_folder + "{}_anomalies.json".format(source.split("/")[-1].split(".")[0])
+        
+        if os.path.isfile(anomaly_filename):
+            print("File exists")
+            with open(anomaly_filename, "r") as af:
+                anomalies_dict = json.loads(af.read())
+                anomalies = anomalies_dict["anomalies"]
+    
+        else:
+            print("File doesn't exist")
+            
+    
+ 
+    # if anomalies exist, fix them    
+    if len(anomalies) > 0:
+
+        channels_fixed = fix_anomalies(anomalies, channels)
+        
+        ts.add_channels(channels_fixed)
+        
     # channels is a list of Channel objects, set above according to the file format
-    ts.add_channels(channels)
+    else:
+        ts.add_channels(channels)
 
     # Calculate how long it took to load this file
     load_end = datetime.now()
@@ -1897,8 +1930,6 @@ def fast_load(source, source_type):
         # print(header_info)
 
         num_pages = int(header_info["number_pages"])
-        '''obs_num = 0
-        ts_num = 0'''
         page = 0
         # Data format contains 300 XYZ values per page
         num = 300
@@ -1918,7 +1949,7 @@ def fast_load(source, source_type):
         for i in range(num_pages):
             lines = [data.readline().strip().decode() for l in range(9)]
             page_time = datetime.strptime(lines[3][10:29],
-                                          "%Y-%m-%d %H:%M:%S")  # + timedelta(microseconds=int(lines[3][30:])*1000)
+                                          "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
             page_timestamps[page] = page_time
 
             # read temperature, for page, in degrees C
@@ -1984,8 +2015,8 @@ def fast_load(source, source_type):
 
         channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
         header = header_info
-
-# channels is a list of Channel objects, set above according to the file format
+    
+    # channels is a list of Channel objects, set above according to the file format
     ts.add_channels(channels)
 
     # Calculate how long it took to load this file

@@ -1,0 +1,428 @@
+import numpy as np
+from datetime import datetime, date, time, timedelta
+import copy
+import itertools
+from struct import *
+from math import *
+import sys
+import re
+import pandas as pd
+from scipy.io.wavfile import write
+import zipfile
+from collections import OrderedDict
+from scipy.interpolate import interp1d
+from bisect import bisect_left, bisect_right
+
+from .Bout  import *
+from .Time_Series import *
+from .time_utilities import *
+from .pampro_utilities import *
+from .hdf5 import *
+from .Channel import *
+
+
+def derive_diffs_secs_array(timestamps):
+    """Using a timestamps array, return an array of difference in seconds"""
+    
+    # difference between consecutive timestamps
+    diffs = np.diff(timestamps)
+    # ... in seconds
+    diffs_secs = [d.total_seconds() for d in diffs]
+    diffs_secs += [diffs_secs[-1]]
+    
+    return diffs_secs
+
+
+def derive_expected_timestamps(timestamps, diffs_secs, allowance):
+    """Using a timestamps array and an array of difference in seconds, return an array of expected timestamps"""
+    
+    expected_uncertainty = np.diff(diffs_secs)
+    expected_uncertainty = np.array([eu for eu in expected_uncertainty] + [diffs_secs[len(diffs_secs)-1]]) # TODO FIX
+    expected_uncertainty = np.abs(expected_uncertainty)
+
+    normal_diff_secs = np.median(diffs_secs)
+
+    deviation_from_median = np.abs(diffs_secs - normal_diff_secs)  
+    deviation_indices = np.where(deviation_from_median > allowance)[0]
+    
+    for di in deviation_indices:
+        diffs_secs[di]= np.nan
+
+    diffs_secs_series = pd.Series(diffs_secs)
+    diffs_secs_smooth_mean = diffs_secs_series.rolling(101, min_periods=1, center=True, win_type="gaussian").mean(std=10)
+    
+    bad_indices = np.where(np.isnan(diffs_secs_smooth_mean))[0]
+    
+    for i in bad_indices:
+        diffs_secs_smooth_mean[i] = normal_diff_secs
+    
+    # create array of expected timestamps based on 'normal' difference
+    expected_timestamp = timestamps[0]
+    expected_timestamps_mean = []
+    for index in range(len(timestamps)):
+
+        expected_timestamps_mean.append(expected_timestamp)
+        expected_timestamp += timedelta(seconds=diffs_secs_smooth_mean[index])
+    
+    expected_timestamps = np.array(expected_timestamps_mean)
+        
+    return expected_timestamps, expected_uncertainty
+    
+    
+def derive_discrepancy_array(timestamps,expected_timestamps):
+    
+    discrepancy = timestamps - expected_timestamps
+    discrepancy_array = np.array([d.total_seconds() for d in abs(discrepancy)])
+
+    return discrepancy_array
+    
+    
+def diagnose_fix_anomalies(channels, window_size=timedelta(hours=2), discrepancy_threshold=2, allowance=None):
+    """ Examine the channels in 'channel_combinations' , diagnose and fix anomalies in the time series data.
+        
+        channels = list of one or more Channel objects, sharing common timestamps
+        window_size = time window to examine for each anomaly to see if the time series 'recovers'
+        discrepancy_threshold = scaling factor applied to difference between the normal difference between timestamps,/
+        to allow for variation and noise
+        allowance = factor to allow for variance from median frequency, can be passed a value to set as a static amount
+        
+    """
+
+    for channel in channels:
+        if len(channel.data) == len(channels[0].data):
+            pass
+        else:
+            raise Exception("Channel data not the same length")
+            
+    timestamps = channels[0].timestamps
+    
+    # difference between consecutive timestamps in seconds
+    diffs_secs = derive_diffs_secs_array(timestamps)
+
+    anomalies = []
+        
+    normal_diff_secs = np.median(diffs_secs)    
+    
+    if normal_diff_secs < 0:
+        anomaly_def = {}
+        anomaly_def["anomaly_type"] = "G"
+        anomaly_def["normal_diff_secs"] = normal_diff_secs 
+        anomalies.append(anomaly_def)
+
+        return anomalies
+
+    # if allowance is to be calculated
+    if allowance is None:
+        allowance = 0.2*normal_diff_secs
+    
+    # convert window size to integer number of samples, depending on frequency of signal
+    window_length = int(round(window_size.total_seconds()/normal_diff_secs))
+    
+    # create array of expected timestamps based on diffs_secs array
+    expected_timestamps, expected_uncertainty = derive_expected_timestamps(timestamps, diffs_secs, allowance)
+    
+    # discrepancy array
+    discrepancy_array = derive_discrepancy_array(timestamps,expected_timestamps)
+    
+    ## IS THERE A DEVIATION FROM EXPECTED IN TIMESTAMPS ARRAY?
+    while max(discrepancy_array) > discrepancy_threshold:
+        
+        if len(anomalies) > 10:
+            break
+        
+        # DEVIATION
+        start_index = np.where(discrepancy_array > discrepancy_threshold)[0][0]   
+        end_index = min(start_index + window_length, len(timestamps)-1)
+        
+        if start_index == end_index:
+            break
+        
+        discrepancy_ahead = timestamps - expected_timestamps
+        discrepancy_behind = expected_timestamps - timestamps
+    
+        ahead = np.array([d.total_seconds() for d in (discrepancy_ahead)])
+        behind = np.array([d.total_seconds() for d in (discrepancy_behind)])
+        # make these absolute
+        ahead[ahead < 0] = 0
+        behind[behind < 0] = 0
+        
+        anomaly_def = {}
+        
+        context_start = max(0, start_index-5)
+        context_end = min(start_index+5, len(timestamps)-1)
+        anomaly_def["timestamp_context"] = [timestamps[t].strftime("%Y-%m-%d %H:%M:%S.%f") for t in range(context_start, context_end, 1)]
+        anomaly_def["last_good_index"] = start_index - 1
+        anomaly_def["last_good_timestamp"] = timestamps[start_index - 1].strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+        if min(discrepancy_array[start_index:end_index]) < discrepancy_threshold:
+        # timeseries recovers to expected sequence - anomaly A or C
+            recovery_point = np.where(discrepancy_array[start_index:end_index] < discrepancy_threshold)[0][0]
+            recovery_point += start_index
+            anomaly_def["recovery_point"] = recovery_point
+            anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+            if sum(ahead[start_index:recovery_point]) > sum(behind[start_index:recovery_point]):
+                anomaly_def["anomaly_type"] = "A"
+                
+            elif sum(ahead[start_index:recovery_point]) < sum(behind[start_index:recovery_point]):
+                anomaly_def["anomaly_type"] = "C"
+            
+            else:
+                anomaly_def["anomaly_type"] = "UNEXPECTED ANOMALY TYPE"
+                break
+    
+        else:
+            # timeseries does not recovers to expected sequence - anomaly B,D E or F
+            
+            # calculate an array of timestamp diff discrepancies
+            diffs_secs_local = derive_diffs_secs_array(timestamps[start_index-1:end_index+1])
+            discrepancy_local = np.abs(diffs_secs_local - normal_diff_secs)
+            
+            # search for indices where discrepancy greater than allowance
+            bad_indices = np.where(discrepancy_local > allowance)[0]
+            bad_indices += start_index 
+            
+            if ahead[end_index] > behind[end_index]:
+                # Then anomaly B or E
+                if len(bad_indices) > 1:
+                    anomaly_def["anomaly_type"] = "E"
+                    recovery_point = bad_indices[len(bad_indices)-1]+2
+                    anomaly_def["recovery_point"] = recovery_point
+            
+                else:
+                    anomaly_def["anomaly_type"] = "B"
+                         
+            else:
+                # anomaly D or F
+                if len(bad_indices) > 1:
+                    anomaly_def["anomaly_type"] = "F"
+                    
+                else:
+                    anomaly_def["anomaly_type"] = "D"
+        
+        channels, expected_timestamps, anomaly_def = fix_anomaly(anomaly_def, channels, expected_timestamps)
+        anomalies.append(anomaly_def)
+        
+        timestamps = channels[0].timestamps
+        
+        # recalculate discrepancy for next loop
+        discrepancy_array = derive_discrepancy_array(timestamps,expected_timestamps)
+    
+    return anomalies
+
+
+def fix_anomalies(anomalies, channels, missing_value=-111, allowance=None):
+
+    timestamps = channels[0].timestamps
+    
+    diffs_secs = derive_diffs_secs_array(timestamps)
+        
+    normal_diff_secs = np.median(diffs_secs)    
+
+    # if allowance is to be calculated
+    if allowance is None:
+        allowance = 0.2*normal_diff_secs
+    
+    # create array of expected timestamps based on diffs_secs array
+    expected_timestamps_original, expected_uncertainty = derive_expected_timestamps(timestamps, diffs_secs, allowance)
+    
+    # split the list of channels into two lists, those with 1:1 data:timestamps and those with m:1 data:timestamps
+    channels_blah = {}
+    for channel in channels:
+    
+        channel.missing_value = missing_value
+        data_timestamp_ratio = int(round(len(channel.data)/len(channel.timestamps)))
+        
+        if data_timestamp_ratio in channels_blah:
+            channels_blah[data_timestamp_ratio].append(channel)
+        else:
+        
+            channels_blah[data_timestamp_ratio] = [channel]
+
+    for k,v in channels_blah.items():
+        print(k)
+        for chan in v:
+            print(chan.name)
+    
+    
+    fixed_channels = []
+    for data_timestamp_ratio, channels_temp in channels_blah.items():
+    
+    
+        expected_timestamps_temp = np.array(expected_timestamps_original, copy=True)
+    
+        for anomaly_def in anomalies:
+            
+        
+            channels_temp, expected_timestamps_temp, anomaly_def = fix_anomaly(anomaly_def, channels_temp, expected_timestamps_temp, missing_value, data_timestamp_ratio)
+        
+        fixed_channels += channels_temp
+        
+    return fixed_channels
+
+
+def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, data_timestamp_ratio=1):
+    """ Performs a 'fix' on a anomaly, given the anomaly definition"""
+    
+    if data_timestamp_ratio == 1:
+        channels, expected_timestamps, anomaly_def = fix_anomaly_one_to_one(anomaly_def, channels, expected_timestamps, missing_value)
+
+    else:
+        channels, expected_timestamps, anomaly_def = fix_anomaly_many_to_one(anomaly_def, channels, expected_timestamps, missing_value, data_timestamp_ratio)
+    
+    
+    return channels, expected_timestamps, anomaly_def
+    
+    
+    # m:1 data:timestamp ratio
+def fix_anomaly_many_to_one(anomaly_def, channels, expected_timestamps, missing_value, data_timestamp_ratio):
+    """ Performs a 'fix' on a anomaly, given the anomaly definition, on channels with m:1 data:timestamps"""
+
+    # last good timestamp index
+    last_good_index = anomaly_def["last_good_index"]
+    dtr = data_timestamp_ratio
+    
+    if anomaly_def["anomaly_type"] == "A" or anomaly_def["anomaly_type"] == "C":
+        # timestamp index at recovery
+        recovery_point = anomaly_def["recovery_point"]
+        for channel in channels:
+            for i in range(last_good_index + 1,recovery_point, 1):
+                channel.timestamps[i] = expected_timestamps[i]
+            
+            for i in range((last_good_index + 1)*dtr, recovery_point*dtr, 1):    
+                channel.data[i] = missing_value
+            
+    
+    elif anomaly_def["anomaly_type"] == "B":
+        
+        timestamps = np.array(channels[0].timestamps, copy=True)
+            
+        first_bad_timestamp = timestamps[last_good_index+1]
+        last_good_timestamp = timestamps[last_good_index]
+        
+        normal_time_diff = timestamps[last_good_index-1] - timestamps[last_good_index-2]
+        time_jump = first_bad_timestamp - last_good_timestamp - normal_time_diff
+
+        a = last_good_timestamp + timedelta(microseconds=10)
+        b = first_bad_timestamp - timedelta(microseconds=10)
+        
+        # insert a timestamp just after last_good_index and another just before last_good_index+1
+        timestamps = np.insert(timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps = np.insert(expected_timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps[last_good_index + 3:] += time_jump
+        
+        anomaly_def["first_index_after_shift"] = last_good_index + 3
+        anomaly_def["first_timestamp_after_shift"] = expected_timestamps[last_good_index + 3].strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+        #insert missing_value into each channel to align with these new timestamps, and update timestamp arrays
+        missing_value_array = np.tile(A=missing_value, reps=2*dtr)
+        for channel in channels:
+            channel.data = np.insert(channel.data, (last_good_index+1)*dtr, missing_value_array)
+            channel.timestamps = timestamps
+            
+            
+    elif anomaly_def["anomaly_type"] == "E":
+        recovery_point = anomaly_def["recovery_point"]
+        
+        timestamps = np.array(channels[0].timestamps, copy=True)
+        
+        for channel in channels:
+            end_point = min(len(timestamps)-1, recovery_point)
+            for i in range(last_good_index + 1, end_point, 1):
+                channel.timestamps[i] = expected_timestamps[i]
+            
+            for i in range((last_good_index + 1)*dtr, (end_point+1)*dtr, 1):    
+                channel.data[i] = missing_value
+        
+        
+        # if recovery point is not the end of the file
+        if recovery_point < len(timestamps)-1:
+            time_jump = timestamps[recovery_point] - expected_timestamps[recovery_point]
+            anomaly_def["time_jump_secs"] = time_jump.total_seconds()
+            anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S.%f")
+            expected_timestamps[recovery_point:] += time_jump
+       
+    
+    elif anomaly_def["anomaly_type"] == "D" or anomaly_def["anomaly_type"] == "F":
+        # truncate each channel data after last good index 
+        for channel in channels:
+            channel.data = channel.data[:(last_good_index+1)*dtr]
+            channel.timestamps = channel.timestamps[:last_good_index+1]
+            
+        expected_timestamps = expected_timestamps[:last_good_index+1]
+            
+    return channels, expected_timestamps, anomaly_def  
+
+
+    # 1:1 data:timestamp ratio
+def fix_anomaly_one_to_one(anomaly_def, channels, expected_timestamps, missing_value):
+    """ Performs a 'fix' on a anomaly, given the anomaly definition, on channels with 1:1 data:timestamps"""
+    
+    last_good_index = anomaly_def["last_good_index"]
+    
+    if anomaly_def["anomaly_type"] == "A" or anomaly_def["anomaly_type"] == "C":
+        recovery_point = anomaly_def["recovery_point"]
+        for channel in channels:
+            for i in range(last_good_index + 1,recovery_point, 1):
+                channel.data[i] = missing_value
+                channel.timestamps[i] = expected_timestamps[i]
+            
+            
+    elif anomaly_def["anomaly_type"] == "B":
+        
+        timestamps = np.array(channels[0].timestamps, copy=True)
+            
+        first_bad_timestamp = timestamps[last_good_index+1]
+        last_good_timestamp = timestamps[last_good_index]
+        
+        normal_time_diff = timestamps[last_good_index-1] - timestamps[last_good_index-2]
+        time_jump = first_bad_timestamp - last_good_timestamp - normal_time_diff
+
+        a = last_good_timestamp + timedelta(microseconds=10)
+        b = first_bad_timestamp - timedelta(microseconds=10)
+        
+        # insert a timestamp just after last_good_index and another just before last_good_index+1
+        timestamps = np.insert(timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps = np.insert(expected_timestamps, last_good_index+1, np.array([a,b]))
+        expected_timestamps[last_good_index + 3:] += time_jump
+        
+        anomaly_def["first_index_after_shift"] = last_good_index + 3
+        anomaly_def["first_timestamp_after_shift"] = expected_timestamps[last_good_index + 3].strftime("%Y-%m-%d %H:%M:%S.%f")
+        
+        #insert missing_value into each channel to align with these new timestamps, and update timestamp arrays
+        for channel in channels:
+            channel.data = np.insert(channel.data, last_good_index+1, np.array([missing_value,missing_value]))
+            channel.timestamps = timestamps
+            
+            
+    elif anomaly_def["anomaly_type"] == "E":
+        recovery_point = anomaly_def["recovery_point"]
+        
+        timestamps = np.array(channels[0].timestamps, copy=True)
+        
+        for channel in channels:
+            end_point = min(len(timestamps)-1, recovery_point)
+            for i in range(last_good_index + 1, end_point, 1):
+                channel.data[i] = missing_value
+                channel.timestamps[i] = expected_timestamps[i]
+            channel.data[end_point] = missing_value
+        
+        # if recovery point is not the end of the file
+        if recovery_point < len(timestamps)-1:
+            time_jump = timestamps[recovery_point] - expected_timestamps[recovery_point]
+            anomaly_def["time_jump_secs"] = time_jump.total_seconds()
+            anomaly_def["recovery_point_timestamp"] = timestamps[recovery_point].strftime("%Y-%m-%d %H:%M:%S.%f")
+            expected_timestamps[recovery_point:] += time_jump
+       
+    
+    elif anomaly_def["anomaly_type"] == "D" or anomaly_def["anomaly_type"] == "F":
+        # truncate each channel data after last good index 
+        for channel in channels:
+            channel.data = channel.data[:last_good_index+1]
+            channel.timestamps = channel.timestamps[:last_good_index+1]
+            
+        expected_timestamps = expected_timestamps[:last_good_index+1]
+            
+    return channels, expected_timestamps, anomaly_def  
+
+    
