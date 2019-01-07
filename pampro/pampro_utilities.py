@@ -1,7 +1,10 @@
 import re
 import collections
+from collections import OrderedDict
 import pandas as pd
 import os,shutil
+import json
+from datetime import timedelta
 
 
 def design_variable_names(signal_name, stat):
@@ -138,8 +141,8 @@ def design_data_dictionary(statistics_dictionary):
             for variable_name, variable_description in zip(variable_names, variable_descriptions):
                 data_dictionary[variable_name] = variable_description
 
-
     return data_dictionary
+
 
 def csv_line(vals):
     """ CSV formatted output of a list """
@@ -148,6 +151,7 @@ def csv_line(vals):
         strval += "," + str(val)
     strval += "\n"
     return strval
+
 
 def dict_write(file_location, id, dictionary, other_index=False):
     """
@@ -180,6 +184,63 @@ def dict_write(file_location, id, dictionary, other_index=False):
     df.to_csv(file_location, na_rep="-1")
 
 
+def json_epochs_to_dict(json_string):
+    """ Converts a json string from a settings file to a dcitionary of epochs,
+    where the name is the key and the timedelta is the value"""
+
+    epochs = json.loads(json_string)
+    epoch_dict = dict()
+
+    for e in epochs:
+        inc = e["increment"]
+        if e["unit"] == "hour(s)":
+            name = str(inc) + "h"
+            epoch = timedelta(hours=inc)
+        elif e["unit"] == "minute(s)":
+            name = str(inc) + "m"
+            epoch = timedelta(minutes=inc)
+        elif e["unit"] == "second(s)":
+            name = str(inc) + "s"
+            epoch= timedelta(seconds=inc)
+        else:
+            name = epoch = ""
+        epoch_dict[name] = epoch
+
+    return epoch_dict
 
 
+def json_cutpoints_to_list(json_string):
+    """ Converts a json string from a settings file to a list of cut points.
+       Each cut point is itself a list comprising of start and end points"""
+    cutpoints = json.loads(json_string)
 
+    cutpoints_list = []
+    for c in cutpoints:
+        start = c["start"]
+        end = c["end"]
+        list1 = [start, end]
+
+        cutpoints_list.append(list1)
+
+    return cutpoints_list
+
+
+def define_statistics(stats_list, intensities_list, angles_list):
+    """Produces the analysis statistics from a list of statistics,
+    a list of intensity cut points and a list of angle cut points"""
+
+    stats = OrderedDict()
+    if 'enmo' in stats_list:
+        stats["ENMO"] = [("generic", ["mean", "n", "missing", "sum"]), ("cutpoints", intensities_list)]
+    if 'hpvfm' in stats_list:
+        stats["HPFVM"] = [("generic", ["mean", "n", "missing", "sum"]), ("cutpoints", intensities_list)]
+    if 'pitch' in stats_list:
+        stats["PITCH"] = [("generic", ["mean", "std", "min", "max"]), ("cutpoints", angles_list)]
+    if 'roll' in stats_list:
+        stats["ROLL"] = [("generic", ["mean", "std", "min", "max"]), ("cutpoints", angles_list)]
+    if 'temperature' in stats_list:
+        stats["Temperature"] = [("generic", ["mean"])]
+    if 'battery' in stats_list:
+        stats["Battery"] = [("generic", ["mean"])]
+
+    return stats

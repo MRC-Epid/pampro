@@ -369,7 +369,7 @@ def convert_actigraph_timestamp(t):
 
 
 def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", datetime_column=0, ignore_columns=False,
-         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None, anomaly_folder=None):
+         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None, anomalies_file=None):
     load_start = datetime.now()
     
     header = OrderedDict()
@@ -1268,29 +1268,16 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                     header["hdf5_file"] = f
 
 
-    # Check for an anomalies JSON file corresponding to this data file, read in the file to a list of dictionaries if it exists
+    # Check for an anomalies csv file corresponding to this data file, read in the file to a list of dictionaries if it exists
     anomalies = []
-    if anomaly_folder is not None:    
-        anomaly_filename = anomaly_folder + "{}_anomalies.json".format(source.split("/")[-1].split(".")[0])
-        
-        if os.path.isfile(anomaly_filename):
-            print("File exists")
-            with open(anomaly_filename, "r") as af:
-                anomalies_dict = json.loads(af.read())
-                anomalies = anomalies_dict["anomalies"]
-    
-        else:
-            print("File doesn't exist")
-            
-    
- 
-    # if anomalies exist, fix them    
-    if len(anomalies) > 0:
-
+    if anomalies_file is not None:
+        anomalies_df = pd.read_csv(anomalies_file)
+        anomalies = anomalies_df.to_dict('records')
+        print(anomalies)
         channels_fixed = fix_anomalies(anomalies, channels)
-        
+
         ts.add_channels(channels_fixed)
-        
+
     # channels is a list of Channel objects, set above according to the file format
     else:
         ts.add_channels(channels)
@@ -1713,6 +1700,7 @@ def fast_load(source, source_type):
         # Rough number of pages expected = length of file / size of block (512 bytes)
         # Add 1% buffer just to be cautious - it's trimmed later
         estimated_num_pages = int(len(raw_bytes) / 512 * 1.01)
+
 
         axivity_x = np.empty(estimated_num_pages)
         axivity_y = np.empty(estimated_num_pages)

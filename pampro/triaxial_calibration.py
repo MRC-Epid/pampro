@@ -1,17 +1,4 @@
-
-from datetime import datetime, date, time, timedelta
-import math
-import copy
-import random
-from scipy import stats
-import numpy as np
-from collections import OrderedDict
 import statsmodels.api as sm
-import pandas as pd
-
-from .Time_Series import *
-from .Bout import *
-from .Channel import *
 from .channel_inference import *
 from .hdf5 import *
 
@@ -46,7 +33,7 @@ def calibrate_slave(x, y, z, temperature, budget=1000, noise_cutoff_mg=13):
 
     stillbouts_ts, calibration_diagnostics = calibrate_stepone(x, y, z, temperature, budget=1000, noise_cutoff_mg=13)
 
-    calibration_diagnostics = calibrate_steptwo(stillbouts_ts, calibration_diagnostics)
+    calibration_diagnostics = calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statistics)
 
     return calibration_diagnostics
 
@@ -141,35 +128,37 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
     return (stillbouts_ts, calibration_diagnostics)
 
 
-def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
+def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statistics=False):
 
     still_x, still_y, still_z, num_samples, still_temperature = still_bouts_from_ts(stillbouts_ts)
-
-    # calculate the standard deviation and 25th, 50th and 75th percentiles of observations for each axis:
-    percentiles = [("p25",25), ("p50",50), ("p75",75)]
-    axes = [("x",still_x.data), ("y",still_y.data), ("z",still_z.data)]
-    for axis,data in axes:
-        calibration_diagnostics[axis + "_upper_ratio"] = axis_distribution_ratio(data,0.3, upper_or_lower="upper")
-        calibration_diagnostics[axis + "_lower_lower"] = axis_distribution_ratio(data, -0.3, upper_or_lower="lower")
-        calibration_diagnostics[axis + "_std"] = np.std(data)
-        for name,value in percentiles:
-            calibration_diagnostics[axis + "_" + name] = np.percentile(data, value)
-
 
     # Get the octant positions of the points to calibrate on
     occupancy = octant_occupancy(still_x.data, still_y.data, still_z.data)
 
-    # Are they fairly distributed?
-    comparisons = {"x<0":[0,1,2,3], "x>0":[4,5,6,7], "y<0":[0,1,4,5], "y>0":[2,3,6,7], "z<0":[0,2,4,6], "z>0":[1,3,5,7]}
-    '''for axis in ["x", "y", "z"]:
-        mt = sum(occupancy[comparisons[axis + ">0"]])
-        lt = sum(occupancy[comparisons[axis + "<0"]])
-        calibration_diagnostics[axis + "_inequality"] = abs(mt-lt)/sum(occupancy)'''
+    # if enhanced calibration statistics are required...
+    if calibration_statistics:
+        ##############################
+        # calculate the standard deviation and 25th, 50th and 75th percentiles of observations for each axis:
+        percentiles = [("p25",25), ("p50",50), ("p75",75)]
+        axes = [("x",still_x.data), ("y",still_y.data), ("z",still_z.data)]
+        for axis, data in axes:
+            calibration_diagnostics[axis + "_upper_ratio"] = axis_distribution_ratio(data,0.3, upper_or_lower="upper")
+            calibration_diagnostics[axis + "_lower_lower"] = axis_distribution_ratio(data, -0.3, upper_or_lower="lower")
+            calibration_diagnostics[axis + "_std"] = np.std(data)
+            for name,value in percentiles:
+                calibration_diagnostics[axis + "_" + name] = np.percentile(data, value)
 
+        # Are the octants fairly distributed?
+        comparisons = {"x<0":[0,1,2,3], "x>0":[4,5,6,7], "y<0":[0,1,4,5], "y>0":[2,3,6,7], "z<0":[0,2,4,6], "z>0":[1,3,5,7]}
+        for axis in ["x", "y", "z"]:
+            mt = sum(occupancy[comparisons[axis + ">0"]])
+            lt = sum(occupancy[comparisons[axis + "<0"]])
+            calibration_diagnostics[axis + "_inequality"] = abs(mt-lt)/sum(occupancy)
 
-    for i,occ in enumerate(occupancy):
-        calibration_diagnostics["octant_"+str(i)] = occ
+        for i,occ in enumerate(occupancy):
+            calibration_diagnostics["octant_"+str(i)] = occ
 
+        ################################
 
     # Calculate the initial error without doing any calibration
     # i.e. set the parameters to an 'ideal'
@@ -191,10 +180,10 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
     #    offset_temp = use offset and temperature offset
     #    offset_scale_temp = use offset, scale and temperature offset
 
-    # If we have less than 500 points to calibrate with, or if more than 2 octants are empty we will not use scale:
+    # If we have less than 100 points to calibrate with, or if 3 or more octants are empty we will not use scale:
     use_scale = True
-    '''if len(still_x.data) < 500 or sum(occupancy == 0) > 2:
-        use_scale = False'''
+    if len(still_x.data) < 100 or sum(occupancy == 0) > 2:
+        use_scale = False
 
     # Assign calibration method according to parameters 'use_scale' and 'still_temperature'
     if not use_scale and still_temperature is None:
@@ -217,7 +206,7 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
     df_original = create_original_and_matched(still_x, still_y, still_z)
 
     calibration_parameters = find_calibration_parameters(df_original, still_x.data, still_y.data, still_z.data, still_temperature,
-                                            cal_mode)
+                                            cal_mode, calibration_statistics)
 
     # update the calibration_diagnostics dictionary with the calibration parameters
     calibration_diagnostics.update(calibration_parameters)
@@ -232,7 +221,7 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics):
     return calibration_diagnostics
 
 
-def find_calibration_parameters(df_original, x_input, y_input, z_input, temperature, cal_mode, optimal_t = 25, num_iterations=1000):
+def find_calibration_parameters(df_original, x_input, y_input, z_input, temperature, cal_mode, calibration_statistics, optimal_t = 25, num_iterations=1000):
     """Find the offset and scaling factors for each 3D axis. Assumes the input vectors are only still points."""
 
     # The DataFrame of original x,y,z data will be used as the basis of linear regression later on.
@@ -276,27 +265,34 @@ def find_calibration_parameters(df_original, x_input, y_input, z_input, temperat
         calibration_parameters["y_temp_offset"] = 0
         calibration_parameters["z_temp_offset"] = 0
 
-    # extract the error in the final regression fit for each axis
-    calibration_parameters["x_rsquared"] = x_results_final.rsquared
-    calibration_parameters["y_rsquared"] = y_results_final.rsquared
-    calibration_parameters["z_rsquared"] = z_results_final.rsquared
+    # if enhanced calibration statistics are required...
+    if calibration_statistics:
 
-    x_bse = x_results_final.bse
-    y_bse = y_results_final.bse
-    z_bse = z_results_final.bse
+        ######################
 
-    calibration_parameters["x_scale_se"] = x_bse[0]
-    calibration_parameters["y_scale_se"] = y_bse[0]
-    calibration_parameters["z_scale_se"] = z_bse[0]
+        # extract the error in the final regression fit for each axis
+        calibration_parameters["x_rsquared"] = x_results_final.rsquared
+        calibration_parameters["y_rsquared"] = y_results_final.rsquared
+        calibration_parameters["z_rsquared"] = z_results_final.rsquared
 
-    calibration_parameters["x_offset_se"] = x_bse[1]
-    calibration_parameters["y_offset_se"] = y_bse[1]
-    calibration_parameters["z_offset_se"] = z_bse[1]
+        x_bse = x_results_final.bse
+        y_bse = y_results_final.bse
+        z_bse = z_results_final.bse
 
-    if "temp" in cal_mode:
-        calibration_parameters["x_temp_offset_se"] = x_bse[2]
-        calibration_parameters["y_temp_offset_se"] = y_bse[2]
-        calibration_parameters["z_temp_offset_se"] = z_bse[2]
+        calibration_parameters["x_scale_se"] = x_bse[0]
+        calibration_parameters["y_scale_se"] = y_bse[0]
+        calibration_parameters["z_scale_se"] = z_bse[0]
+
+        calibration_parameters["x_offset_se"] = x_bse[1]
+        calibration_parameters["y_offset_se"] = y_bse[1]
+        calibration_parameters["z_offset_se"] = z_bse[1]
+
+        if "temp" in cal_mode:
+            calibration_parameters["x_temp_offset_se"] = x_bse[2]
+            calibration_parameters["y_temp_offset_se"] = y_bse[2]
+            calibration_parameters["z_temp_offset_se"] = z_bse[2]
+
+        #########################
 
     return calibration_parameters
 
@@ -422,7 +418,7 @@ def dataframe_transformation(df, x_params, y_params, z_params, cal_mode):
     return df
 
 
-def do_calibration(x,y,z,temperature,cp, optimal_t = 25):
+def do_calibration(x,y,z,temperature,cp, optimal_t=25):
     """
     Performs calibration on given channel using a given dictionary of parameters (cp)
      """

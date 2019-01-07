@@ -160,6 +160,7 @@ def load_bouts_from_hdf5_group(hdf5_group):
 
     return bouts
 
+
 def save_bouts_to_hdf5_group(bouts, hdf5_group):
     """
     Given a list of bouts and a HDF5 group, save the bouts as 2 separate HDF5 datasets of starts and ends.
@@ -197,6 +198,7 @@ def save_bouts_to_hdf5_group(bouts, hdf5_group):
         end = hdf5_group.create_dataset("end_timestamps", (num_bouts,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
         end[...] = ends
 
+
 def save_bouts(bouts, output, group_name):
 
     if type(output) is h5py._hl.files.File:
@@ -213,6 +215,7 @@ def save_bouts(bouts, output, group_name):
     group = f.create_group(group_name)
     group.attrs["pampro_type"] = "bouts"
     save_bouts_to_hdf5_group(bouts, group)
+
 
 def load_time_series(hdf5_group):
     """
@@ -248,6 +251,7 @@ def load_time_series(hdf5_group):
 
     return ts
 
+
 def timestamps_to_offsets(timestamps):
     """
     Express a list of timestamps as a list of millisecond offsets from the first timestamp
@@ -261,6 +265,7 @@ def timestamps_to_offsets(timestamps):
 
     return (start,offsets)
 
+
 def interpolate_offsets(offsets, data_length):
     """
     Expand a sparse list of offsets into an exhaustive list which effectively gives the offset of every data entry.
@@ -269,12 +274,12 @@ def interpolate_offsets(offsets, data_length):
 
     # Essentially equates to the number of observations per page in a raw file
     data_to_offset_ratio = math.ceil(data_length / len(offsets))
+    print(data_to_offset_ratio)
 
     # Append a final offset value so the iteration below fills the final values
     offsets = np.concatenate((offsets, [offsets[-1] + (offsets[-1]-offsets[-2])]))
 
     full_offsets = np.empty(data_length, dtype="uint32")
-
 
     for i,a,b in zip(range(len(offsets)), offsets, offsets[1:]):
 
@@ -288,7 +293,7 @@ def interpolate_offsets(offsets, data_length):
     return full_offsets
 
 
-def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])], meta_candidates=["calibrated", "frequency"], compression=4, data_type="float32"):
+def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])], meta_candidates=["calibrated", "frequency", "missing_value"], compression=4, data_type="float32"):
     """
     Output a Time_Series object to a HDF5 container, for super-fast loading by the data_loading module.
     For information on HDF5: https://www.hdfgroup.org/HDF5/
@@ -314,7 +319,9 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         first_channel = ts[channels[0]]
         timestamps = first_channel.timestamps
         data_length = len(first_channel.data)
+        print(first_channel, "data_length", data_length)
         timestamp_length = len(timestamps)
+        print("timestamp_length", timestamp_length)
 
         # set attributes for the first group only
         if file_header is not None:

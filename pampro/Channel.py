@@ -1,21 +1,13 @@
-import numpy as np
-from datetime import datetime, date, time, timedelta
-import copy
-from struct import *
-from math import *
-import sys
-import re
 from scipy.io.wavfile import write
-import zipfile
-from collections import OrderedDict
 from scipy.interpolate import interp1d
 from bisect import bisect_left, bisect_right
 
-from .Bout  import *
+from .Bout import *
 from .Time_Series import *
 from .time_utilities import *
 from .pampro_utilities import *
 from .hdf5 import *
+
 
 class Channel(object):
 
@@ -178,7 +170,9 @@ class Channel(object):
         self.timeframe = channel.timeframe
         self.time_period = channel.time_period
 
-        self.data[channel.data==channel.missing_value] = channel.data[channel.data==channel.missing_value]
+        for i in range(len(self.data)):
+            if channel.data[i] == channel.missing_value:
+                self.data[i] = self.missing_value
 
         try:
             self.frequency = channel.frequency
@@ -826,7 +820,7 @@ class Channel(object):
 
         return bouts
 
-    def delete_windows(self, windows, missing_value = -111):
+    def delete_windows(self, windows, missing_value=-111):
         """ Given a list of Bouts, replace any data inside those time windows with the given missing_value. This masks the data when being summarised by any statistic methods. """
 
         # New approach - don't delete the data, mask it with a set value
@@ -851,7 +845,7 @@ class Channel(object):
     def fill(self, bout, fill_value=0):
         """ Given a Bout representing a window of time, replace all the data values of this Channel within the time window with a given fill_value. """
 
-        start_index,end_index = self.get_window(bout.start_timestamp,bout.end_timestamp)
+        start_index,end_index = self.get_window(bout.start_timestamp, bout.end_timestamp)
         #print(start_index, end_index)
         self.data[start_index:end_index] = fill_value
 
@@ -932,6 +926,7 @@ class Channel(object):
 
         return output
 
+
 def channel_from_coefficients(coefs, timestamps):
     chan = Channel("Recreated")
 
@@ -939,6 +934,7 @@ def channel_from_coefficients(coefs, timestamps):
     chan.set_contents(recreated, timestamps)
 
     return chan
+
 
 def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skeleton=False, in_value=1, out_value=0):
 
@@ -976,5 +972,4 @@ def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skelet
         result.fill(bout, in_value)
 
     return result
-    
-    
+

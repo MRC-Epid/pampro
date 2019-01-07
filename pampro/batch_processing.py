@@ -2,11 +2,13 @@ import collections
 import math
 import numpy as np
 import sys, os
+import glob
 from datetime import datetime
 import json
 import traceback
 import pandas as pd
-import glob
+from .pampro_utilities import *
+
 
 def job_indices(n, num_jobs, job_list_size):
 
@@ -29,9 +31,9 @@ def job_indices(n, num_jobs, job_list_size):
         start_index = end_index
 
 
-def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, job_num=1, num_jobs=1):
+def batch_process(analysis_function, jobs_spec, job_num=1, num_jobs=1, task=None):
     """
-    Generates a dictionary of job details from a job file with more than one column, ready to pass to batch_process_steptwo below.
+    Wrapper to allow a function to be executed as a batch
     """
 
     batch_start_time = datetime.now()
@@ -55,12 +57,10 @@ def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, j
         task = analysis_function.__name__
 
     error_log = False
-    output_log = open("_logs" + os.sep + task + "_output_{}.csv".format(job_num), "w")
+    output_log = open("_logs" + os.sep + task + "_output_{}.csv".format(str(job_num)), "w")
 
     for n, job in my_jobs.iterrows():
 
-        successful = False
-        
         output_log.write("\nJob {}/{}\n".format(n+1, len(my_jobs)))
         for index in job.index:
             output_log.write("{}: {}".format(index, job[index]))
@@ -70,10 +70,7 @@ def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, j
         output_log.flush()
 
         try:
-            output_dict = analysis_function(job)
-            
-            successful = True
-            
+            analysis_function(job)
             
         except:
 
@@ -81,7 +78,7 @@ def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, j
 
             # Create the error file only if an error has occurred
             if error_log is False:
-                error_log = open("_logs" + os.sep + task + "_error_{}.csv".format(job_num), "w")
+                error_log = open("_logs" + os.sep + task + "_error_{}.csv".format(str(job_num)), "w")
 
             print("Exception:" + str(sys.exc_info()))
             print(tb)
@@ -91,17 +88,6 @@ def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, j
             error_log.write(tb + "\n\n")
             error_log.flush()
 
-        data_filename = job["data_filename"]   
-        status_to_append = {task + "_executed": True,
-                            task + "_successful": successful}
-                            
-        if output_dict is not None:
-            for k,v in output_dict.items():
-                status_to_append[k] = v
-         
-        if status_folder:
-            update_status_from_filename(data_filename, status_folder, status_to_append)
-        
         job_end_time = datetime.now()
         job_duration = job_end_time - job_start_time
         output_log.write("\nJob run time: " + str(job_duration))
@@ -122,155 +108,70 @@ def batch_process(analysis_function, jobs_spec, status_folder=None, task=None, j
     # If everything went smoothly, error_log is False because it was never a file object
     if error_log is not False:
         error_log.close()
-        
 
 
-def update_status_from_filename(filename, status_folder, status_to_append):
+def batch_process_wrapper(analysis_function, jobs_df, settings, job_num=1, num_jobs=1):
+    """ An updated, condensed version of the above wrapper function that is compatible with 'pampro-manager' interface
 
-    status = get_status_from_filename(filename, status_folder)
+        Requires a jobs dataframe that contains a pid for each job, and either a filename or monitor number
+        to create a 'job name' to name the output or error logs.
 
-    for k,v in status_to_append.items():
-        status[k] = v
-    
-    set_status(filename, status_folder, status)
-    
+        Also requires a settings dataframe that contains the logs folder path and submission id.
+    """
 
-def get_status_from_filename(filename, status_folder):
-    head, tail = os.path.split(filename)
-    name = tail.split(".")[0] + "_status.json"
-    
-    status_filename = status_folder + os.sep + name
-    
-    if os.path.isfile(status_filename):
-        with open(status_filename, "r") as sf:
-            status = json.loads(sf.read())
-    
-    return status
-    
-    
-def get_status_from_status_file(status_filename, status_folder):
+    task = analysis_function.__name__
 
-    if os.path.isfile(status_filename):
-        with open(status_filename, "r") as sf:
-            status = json.loads(sf.read())
-    
-    return status
+    submission_id = settings["submission_id"].item()
+    logs_folder = settings["logs_folder"].item()
+    # archive = os.path.join(logs_folder, "archive")
+    output_string = "_completed_"
+    error_string = "_unsuccessful_"
 
+    # Using job_num and num_jobs, calculate which files this process should handle
+    job_section = job_indices(job_num, num_jobs, len(jobs_df))
+    my_jobs = jobs_df[job_section[0]:job_section[1]]
 
-def set_status(filename, status_folder, status=None):
-    
-    if not status:
-        status = {} 
-    
-    head, tail = os.path.split(filename)
-    name = tail.split(".")[0] + "_status.json"
+    for n, job in my_jobs.iterrows():
 
-    status_filename = status_folder + os.sep + name
-    
-    if len(status) == 0:
-        status["data_filename"] = filename
-    
-    with open(status_filename, "w") as sf:        
-        sf.write(json.dumps(status))
-    
+        if "filename" in job.index:
+            filename = job["filename"]
+            head, tail = os.path.split(filename)
+            job_name = tail.split('.')[0]
 
+        elif "monitor_id" in job.index:
+            job_name = job["monitor_id"]
 
-def list_all_status_files(status_folder):
-    status_files = glob.glob(status_folder + os.sep + "*_status.json")
-    
-    return status_files
+        else:
+            job_name = "unknown"
 
+        pid = job["pid"]
+        job_start_time = datetime.now()
 
-def list_all_raw_files(data_folder):
-    data_files = glob.glob(data_folder + os.sep + "*.*")
-    
-    return data_files
+        # archive any existing output or error logs for current file and task
+        '''for string in [output_string, error_string]:
+            existing_logs = glob.glob(logs_folder + os.sep + job_name + "_" + task + "*")
+            if os.path.isfile(existing_log):
+                index = len(glob.glob(archive + os.sep + job_name + "_" + task + "*")) + 1
+                archived_log = archive + os.sep + job_name + "_" + task + str(index) + string
+                shutil.move(existing_log, archived_log)'''
 
+        try:
+            output_dict = analysis_function(job, settings)
+            job_end_time = datetime.now()
+            job_duration = job_end_time - job_start_time
+            output_dict["job_duration"] = str(job_duration)
 
-def is_task_executed(status, task):
-    
-    task_executed = task + "_executed"
-    
-    if task_executed in status:
-        return status[task_executed]
-    else:
-        return False
-        
-    
-def is_task_successful(status, task):    
-    
-    task_successful = task + "_successful"
-    
-    if task_successful in status:
-        return status[task_successful]
-    else:
-        return False
-        
+            output_log = logs_folder + os.sep + job_name + "_" + task + output_string + submission_id + ".csv"
+            dict_write(output_log, pid, output_dict)
 
-def ready_for_task(status_folder, task, prerequisites=[]):
+        except Exception:
 
-    status_files = list_all_status_files(status_folder)
-    
-    ready = []
-    for status_file in status_files:
-        status = get_status_from_status_file(status_file, status_folder)
-        if prerequisite_satisfied(status, prerequisites):
-            if not is_task_successful(status, task):
-                ready.append(status["data_filename"])
+            tb = traceback.format_exc()
 
-    df = pd.DataFrame({"data_filename": ready})
-    
-    return df
-    
-    
-def ensure_status_files(data_folder, status_folder):
+            # Create the error file only if an error has occurred
+            with open(logs_folder + os.sep + job_name + "_" + task + error_string + submission_id + ".csv", "w") as error_log:
 
-    filenames_lacking_status = files_without_status(data_folder, status_folder)
-    
-    for filename in filenames_lacking_status:
-        set_status(filename, status_folder)
-        
-
-def files_without_status(data_folder, status_folder):
-    
-    status_files = list_all_status_files(status_folder)
-    
-    data_files = list_all_raw_files(data_folder)
-    print("num status", len(status_files))
-    print("num data", len(data_files))
-    
-    status_files_map = {}
-    
-    status_files_set = set()
-    for f in status_files:
-        head, tail = os.path.split(f)
-        name = tail.split(".")[0]
-        name = name.replace("_status", "")
-        status_files_set.add(name)
-        status_files_map[name] = f
-        
-    data_files_map = {}
-    data_files_set = set()
-    for f in data_files:
-        head, tail = os.path.split(f)
-        name = tail.split(".")[0]
-        data_files_set.add(name)
-        data_files_map[name] = f
-     
-    lacking_status = data_files_set - status_files_set
-    print("num lacking status", len(lacking_status))
-    
-    filenames_lacking_status = [data_files_map[name] for name in lacking_status]
-    print(filenames_lacking_status)
-    
-    return filenames_lacking_status
-    
-    
-def prerequisite_satisfied(status, prerequisites):
-
-    for prerequisite in prerequisites:
-        if not is_task_successful(status, prerequisite):
-            return False
-    
-    return True
-    
+                error_log.write(str(job) + "\n")
+                error_log.write("Exception:" + str(sys.exc_info()) + "\n")
+                error_log.write(tb + "\n\n")
+                error_log.flush()
