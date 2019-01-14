@@ -821,7 +821,8 @@ class Channel(object):
         return bouts
 
     def delete_windows(self, windows, missing_value=-111):
-        """ Given a list of Bouts, replace any data inside those time windows with the given missing_value. This masks the data when being summarised by any statistic methods. """
+        """ Given a list of Bouts, replace any data inside those time windows with the given missing_value.
+        This masks the data when being summarised by any statistic methods. """
 
         # New approach - don't delete the data, mask it with a set value
         # Then when we summarise, check if data has been masked (missing_value is not False)

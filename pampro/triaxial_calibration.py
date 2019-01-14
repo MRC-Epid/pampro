@@ -561,7 +561,7 @@ def axis_distribution_ratio(data, cutoff, upper_or_lower="upper"):
 
 
 def still_bouts_from_ts(stillbouts_ts):
-    """Extracts the still bouts data (including temperature is available) and returns channels of data"""
+    """Extracts the still bouts data (including temperature if available) and returns channels of data"""
 
     still_x = stillbouts_ts["X_mean"]
     still_y = stillbouts_ts["Y_mean"]

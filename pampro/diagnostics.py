@@ -239,11 +239,11 @@ def fix_anomalies(anomalies, channels, missing_value=-111, allowance=None):
 
             channels_timestamp_ratios[data_timestamp_ratio] = [channel]
 
-    for k,v in channels_timestamp_ratios.items():
+    '''for k,v in channels_timestamp_ratios.items():
         print(k)
         for chan in v:
             print(chan.name)
-            print(chan.missing_value)
+            print(chan.missing_value)'''
 
     fixed_channels = []
     for data_timestamp_ratio, channel_temps in channels_timestamp_ratios.items():

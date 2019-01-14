@@ -122,7 +122,7 @@ def infer_enmo_a(vm):
 
     result = Channel("ENMOa")
 
-    result.set_contents( np.absolute((vm.data - 1.0)*1000.0), vm.timestamps)
+    result.set_contents(np.absolute((vm.data - 1.0)*1000.0), vm.timestamps)
 
     result.inherit_time_properties(vm)
 
@@ -138,7 +138,7 @@ def infer_vm_hpf(vm):
 
     vm_hpf.inherit_time_properties(vm)
 
-    vm_hpf.draw_properties = {"c":[0.8,0.05,0.8], "lw":2}
+    vm_hpf.draw_properties = {"c": [0.8, 0.05, 0.8], "lw": 2}
 
     return vm_hpf
 
