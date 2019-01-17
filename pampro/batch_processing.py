@@ -173,7 +173,9 @@ def batch_process_wrapper(analysis_function, jobs_df, settings, job_num=1, num_j
             # Create the error file only if an error has occurred
             with open(logs_folder + os.sep + job_name + "_" + task + error_string + submission_id + ".csv", "w") as error_log:
 
-                error_log.write(str(job) + "\n")
+                error_log.write("Error log at " + str(datetime.now()) + "\n")
+                for k, v in job.iteritems():
+                    error_log.write(str(k) + ": " + str(v) + "\n")
                 error_log.write("Exception:" + str(sys.exc_info()) + "\n")
                 error_log.write(tb + "\n\n")
                 error_log.flush()
