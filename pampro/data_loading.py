@@ -1,28 +1,8 @@
-import numpy as np
-import scipy as sp
-from datetime import datetime, date, time, timedelta
-import copy
-from struct import *
-from math import *
-import time as timestdlib
-import sys, os
-import io
-import traceback
-import re
-import string
-from scipy.io.wavfile import write
-import zipfile
-from collections import OrderedDict
-import h5py
-from itertools import chain
-import json 
 
-from .Channel import *
-from .Bout import *
-from .Time_Series import *
-from .time_utilities import *
-from .pampro_utilities import *
-from .hdf5 import *
+import io
+
+from itertools import chain
+
 from .diagnostics import *
 
 # CWA Metadata Reader by Dan Jackson, 2017.

@@ -83,7 +83,9 @@ def batch_process(analysis_function, jobs_spec, job_num=1, num_jobs=1, task=None
             print("Exception:" + str(sys.exc_info()))
             print(tb)
 
-            error_log.write( str(job) + "\n" )
+            error_log.write("Error log at " + str(datetime.now())+ "\n")
+            for k, v in job.iteritems():
+                error_log.write(str(k) + ": " + str(v) + "\n")
             error_log.write("Exception:" + str(sys.exc_info()) + "\n")
             error_log.write(tb + "\n\n")
             error_log.flush()
