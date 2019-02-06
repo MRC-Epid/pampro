@@ -26,7 +26,7 @@ def is_calibrated(channel):
     return hasattr(channel, "calibrated") and channel.calibrated == True
 
 
-def calibrate_slave(x, y, z, temperature, budget=1000, noise_cutoff_mg=13):
+def calibrate_slave(x, y, z, temperature, budget=1000, noise_cutoff_mg=13, calibration_statistics=False):
     """
     Slave to calibrate()
     """
@@ -38,11 +38,12 @@ def calibrate_slave(x, y, z, temperature, budget=1000, noise_cutoff_mg=13):
     return calibration_diagnostics
 
 
-def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_file=None):
+def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_file=None, calibration_statistics=False):
     """ Use still bouts in the given triaxial data to calibrate it and return the calibrated channels """
 
-    args = {"x":x, "y":y, "z":z, "temperature":temperature, "budget":budget, "noise_cutoff_mg":noise_cutoff_mg}
-    params = ["temperature", "budget", "noise_cutoff_mg"]
+    args = {"x": x, "y": y, "z": z, "temperature": temperature, "budget": budget, "noise_cutoff_mg": noise_cutoff_mg,
+            "calibration_statistics": calibration_statistics}
+    params = ["temperature", "budget", "noise_cutoff_mg", "calibration_statistics"]
     calibration_diagnostics = do_if_not_cached("calibrate", calibrate_slave, args, params, get_calibrate, set_calibrate, hdf5_file)
 
     # Regardless of how we get the results, extract the offset and scales
@@ -54,7 +55,7 @@ def calibrate(x, y, z, temperature=None, budget=1000, noise_cutoff_mg=13, hdf5_f
     # Apply the best calibration factors to the data
     do_calibration(x, y, z, temperature, calibration_parameters)
 
-    return (x, y, z, calibration_diagnostics)
+    return x, y, z, calibration_diagnostics
 
 
 def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, noise_cutoff_mg=13):
@@ -113,7 +114,7 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
     # if battery data is required build the statistics channel and add to the still bouts Time Series
     if battery is not None:
         still_battery = battery.build_statistics_channels(still_bouts, [("generic", ["mean"])])[0]
-        calibration_diagnostics["min_battery"] = np.min(temperature.data)
+        calibration_diagnostics["min_battery"] = np.min(battery.data)
         calibration_diagnostics["max_battery"] = np.max(battery.data)
         stillbouts_ts.add_channel(still_battery)
 
@@ -202,11 +203,22 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statis
         cal_mode = "offset_scale_temp"
         calibration_diagnostics["calibration_method"] = "offset and scale with temperature"
 
-    # Create a DataFrame containing the original x,y,z data and the x,y,z matched data:
-    df_original = create_original_and_matched(still_x, still_y, still_z)
+    # Create a DataFrame containing the original x,y,z data and the x,y,z to be transformed data:
+    df = pd.DataFrame({"X_orig": still_x.data,
+                       "Y_orig": still_y.data,
+                       "Z_orig": still_z.data,
+                       "X": still_x.data,
+                       "Y": still_y.data,
+                       "Z": still_z.data})
 
-    calibration_parameters = find_calibration_parameters(df_original, still_x.data, still_y.data, still_z.data, still_temperature,
-                                            cal_mode, calibration_statistics)
+    # Create an intercept row in order to find the offset factor
+    df["intercept"] = 1
+
+    # Find the first "closest points" for the matched arrays
+    update_matched(df)
+
+    # find the calibration parameters required to optimise x,y,z to the closest points
+    calibration_parameters = find_calibration_parameters(df, still_temperature, cal_mode, calibration_statistics)
 
     # update the calibration_diagnostics dictionary with the calibration parameters
     calibration_diagnostics.update(calibration_parameters)
@@ -221,28 +233,23 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statis
     return calibration_diagnostics
 
 
-def find_calibration_parameters(df_original, x_input, y_input, z_input, temperature, cal_mode, calibration_statistics, optimal_t = 25, num_iterations=1000):
+def find_calibration_parameters(df, temperature, cal_mode, calibration_statistics, optimal_t=25, num_iterations=1000):
     """Find the offset and scaling factors for each 3D axis. Assumes the input vectors are only still points."""
-
-    # The DataFrame of original x,y,z data will be used as the basis of linear regression later on.
-    # Copy df_original, then add x,y,z inputs to the copy (df_current)
-    df_current = df_original.copy()
-    df_current["X"] = x_input
-    df_current["Y"] = y_input
-    df_current["Z"] = z_input
 
     if "temp" in cal_mode:
         # create a column of T - optimal_T (mean temperature for each still bout minus the optimal temperature) i.e. the deviation in T from the optimal
-        df_current["T_dev"] = temperature.data - optimal_t
-
+        df["T_dev"] = temperature.data - optimal_t
 
     for i in range(num_iterations):
-        #do linear regression:
-        x_results, y_results, z_results = dataframe_regression(df_current, cal_mode, do_or_undo="do")
+        # do linear regression:
+        x_results, y_results, z_results = dataframe_regression(df, cal_mode, do_or_undo="do")
 
         # results.params() gives the calibration parameters thus:
         # x_results.params() = [x_scale, x_offset, x_temp_offset]   (last item only applies if temperature is used)
-        df = dataframe_transformation(df_current, x_results.params, y_results.params, z_results.params, cal_mode)
+        df = dataframe_transformation(df, x_results.params, y_results.params, z_results.params,
+                                                           cal_mode)
+        # update the "matched" arrays to reflect the new "closest points" after the dataframe transformation
+        update_matched(df)
 
     # Regress the backup copy of the original input against the transformed version,
     # to calculate offset, scale and temperature offset scalar (if temperature used)
@@ -304,35 +311,31 @@ def nearest_sphere_surface(x_input, y_input, z_input):
     return (x_input/vm, y_input/vm, z_input/vm)
 
 
-def create_original_and_matched(x_input, y_input, z_input):
-    """Creates and returns a DataFrame containing the original x,y,z data and the x,y,z matched data and an intercept column of ones
-    (the nearest corresponding points on a perfect sphere)"""
-    df = pd.DataFrame({"X_orig": x_input.data,
-                                "Y_orig": y_input.data,
-                                "Z_orig": z_input.data})
+def update_matched(df):
+    """Takes a df of still bout data and updates the "matched" arrays"""
 
-    # Need 3 blank arrays to populate
-    x_matched = np.empty(len(x_input.data))
-    y_matched = np.empty(len(y_input.data))
-    z_matched = np.empty(len(z_input.data))
+    # check if "x_matched", "y_matched" and "z_matched" exist already, if not create them as empty arrays:
+    if {"X_matched", "Y_matched", "Z_matched"}.issubset(df.columns):
+        pass
+    else:
+        # Need 3 blank arrays to populate
+        x_matched = np.empty(len(df.X_orig))
+        y_matched = np.empty(len(df.Y_orig))
+        z_matched = np.empty(len(df.Z_orig))
 
-    for i,a,b,c in zip(range(len(x_input.data)),x_input.data, y_input.data, z_input.data):
+        df["X_matched"] = x_matched
+        df["Y_matched"] = y_matched
+        df["Z_matched"] = z_matched
+
+    for i in range(len(df.X)):
 
         # For each point, find its nearest point on the surface of a sphere
-        closest = nearest_sphere_surface(a,b,c)
+        closest = nearest_sphere_surface(df.X[i], df.Y[i], df.Z[i])
 
-        # Put the result in the X,Y,Z arrays
-        x_matched[i] = closest[0]
-        y_matched[i] = closest[1]
-        z_matched[i] = closest[2]
-
-    # Add matched arrays to DataFrame
-    df["X_matched"] = x_matched
-    df["Y_matched"] = y_matched
-    df["Z_matched"] = z_matched
-
-    # Create an intercept row in order to find the offset factor
-    df["intercept"] = 1
+        # Put the result in the X,Y,Z matched arrays
+        df.at[i, "X_matched"] = closest[0]
+        df.at[i, "Y_matched"] = closest[1]
+        df.at[i, "Z_matched"] = closest[2]
 
     return df
 
@@ -540,6 +543,7 @@ def octant_occupancy(x, y, z):
             pass
 
     return octants
+
 
 def axis_distribution_ratio(data, cutoff, upper_or_lower="upper"):
     """Returns a ratio of the number of samples lying either above an upper cutoff value or lying below a lower cutoff as a proportion of the total"""
