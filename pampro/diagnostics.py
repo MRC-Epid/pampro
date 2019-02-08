@@ -268,7 +268,7 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
     
     if anomaly_def["anomaly_type"] == "A" or anomaly_def["anomaly_type"] == "C":
         # timestamp index at recovery
-        recovery_point = anomaly_def["recovery_point"]
+        recovery_point = int(anomaly_def["recovery_point"])
         for channel in channels:
             for i in range(last_good_index + 1,recovery_point, 1):
                 channel.timestamps[i] = expected_timestamps[i]
