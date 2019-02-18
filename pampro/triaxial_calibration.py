@@ -129,7 +129,7 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
     return (stillbouts_ts, calibration_diagnostics)
 
 
-def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statistics=False):
+def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statistics=False, num_iterations=1000):
 
     still_x, still_y, still_z, num_samples, still_temperature = still_bouts_from_ts(stillbouts_ts)
 
@@ -218,7 +218,7 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statis
     update_matched(df)
 
     # find the calibration parameters required to optimise x,y,z to the closest points
-    calibration_parameters = find_calibration_parameters(df, still_temperature, cal_mode, calibration_statistics)
+    calibration_parameters = find_calibration_parameters(df, still_temperature, cal_mode, calibration_statistics, num_iterations)
 
     # update the calibration_diagnostics dictionary with the calibration parameters
     calibration_diagnostics.update(calibration_parameters)
@@ -227,17 +227,17 @@ def calibrate_steptwo(stillbouts_ts, calibration_diagnostics, calibration_statis
     end_error = evaluate_solution(still_x, still_y, still_z, num_samples, calibration_parameters, still_temperature)
 
     calibration_diagnostics["start_error"] = start_error
-    # define end error as 'global' as it is calculated using all the still data available
-    calibration_diagnostics["global_end_error"] = end_error
+    calibration_diagnostics["end_error"] = end_error
 
     return calibration_diagnostics
 
 
-def find_calibration_parameters(df, temperature, cal_mode, calibration_statistics, optimal_t=25, num_iterations=1000):
+def find_calibration_parameters(df, temperature, cal_mode, calibration_statistics, num_iterations, optimal_t=25):
     """Find the offset and scaling factors for each 3D axis. Assumes the input vectors are only still points."""
 
     if "temp" in cal_mode:
-        # create a column of T - optimal_T (mean temperature for each still bout minus the optimal temperature) i.e. the deviation in T from the optimal
+        # create a column of T - optimal_T (mean temperature for each still bout minus the optimal temperature)
+        # i.e. the deviation in T from the optimal
         df["T_dev"] = temperature.data - optimal_t
 
     for i in range(num_iterations):
@@ -305,7 +305,8 @@ def find_calibration_parameters(df, temperature, cal_mode, calibration_statistic
 
 
 def nearest_sphere_surface(x_input, y_input, z_input):
-    """Given the 3D co-ordinates of a point, return the 3D co-ordinates of the point on the surface of a unit sphere. """
+    """Given the 3D co-ordinates of a point,
+    return the 3D co-ordinates of the point on the surface of a unit sphere. """
 
     vm = math.sqrt(sum([x_input**2, y_input**2, z_input**2]))
     return (x_input/vm, y_input/vm, z_input/vm)

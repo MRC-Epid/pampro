@@ -1253,7 +1253,6 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
     if anomalies_file is not None:
         anomalies_df = pd.read_csv(anomalies_file)
         anomalies = anomalies_df.to_dict('records')
-        print(anomalies)
         channels_fixed = fix_anomalies(anomalies, channels)
 
         ts.add_channels(channels_fixed)
