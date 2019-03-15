@@ -113,6 +113,10 @@ class Channel(object):
             self.set_contents(new_data, new_timestamps, timestamp_policy=self.timestamp_policy)
             self.frequency = frequency
 
+            del func
+            del new_timestamps
+            del new_data
+
         elif self.timestamp_policy == "normal":
 
             # This is a bit of a hack, but it works.
@@ -130,6 +134,10 @@ class Channel(object):
             self.cached_indices = {}
             self.set_contents(new_data, new_timestamps, timestamp_policy=self.timestamp_policy)
             self.frequency = frequency
+
+            del func
+            del new_timestamps
+            del new_data
 
         else:
             print("NOPE.")

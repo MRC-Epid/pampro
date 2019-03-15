@@ -10,27 +10,6 @@ import pandas as pd
 from .pampro_utilities import *
 
 
-def job_indices(n, num_jobs, job_list_size):
-
-    n = n-1
-
-    job_size = math.floor(job_list_size/num_jobs)
-    remaining = job_list_size - (num_jobs*job_size)
-
-    start_index = 0
-    for i in range(num_jobs):
-
-        end_index = min( job_list_size, start_index + job_size )
-
-        if remaining > 0:
-            end_index += 1
-            remaining -= 1
-
-        if i == n:
-            return (start_index,end_index)
-        start_index = end_index
-
-
 def batch_process(analysis_function, jobs_spec, job_num=1, num_jobs=1, task=None):
     """
     Wrapper to allow a function to be executed as a batch
@@ -42,12 +21,11 @@ def batch_process(analysis_function, jobs_spec, job_num=1, num_jobs=1, task=None
         
         # Load the document listing all the files to be processed
         # read in the file
-        df = pd.read_csv(jobs_spec)
+        df = pd.read_csv(jobs_spec, engine="python")
         
     else:
     
-        df = jobs_spec 
-
+        df = jobs_spec
 
     # Using job_num and num_jobs, calculate which files this process should handle
     job_section = job_indices(job_num, num_jobs, len(df))
@@ -149,14 +127,6 @@ def batch_process_wrapper(analysis_function, jobs_df, settings, job_num=1, num_j
         pid = job["pid"]
         job_start_time = datetime.now()
 
-        # archive any existing output or error logs for current file and task
-        '''for string in [output_string, error_string]:
-            existing_logs = glob.glob(logs_folder + os.sep + job_name + "_" + task + "*")
-            if os.path.isfile(existing_log):
-                index = len(glob.glob(archive + os.sep + job_name + "_" + task + "*")) + 1
-                archived_log = archive + os.sep + job_name + "_" + task + str(index) + string
-                shutil.move(existing_log, archived_log)'''
-
         try:
             output_dict = analysis_function(job, settings)
             job_end_time = datetime.now()
@@ -179,3 +149,25 @@ def batch_process_wrapper(analysis_function, jobs_df, settings, job_num=1, num_j
                 error_log.write("Exception:" + str(sys.exc_info()) + "\n")
                 error_log.write(tb + "\n\n")
                 error_log.flush()
+
+
+def job_indices(n, num_jobs, job_list_size):
+
+    n = n-1
+
+    job_size = math.floor(job_list_size/num_jobs)
+    remaining = job_list_size - (num_jobs*job_size)
+
+    start_index = 0
+    for i in range(num_jobs):
+
+        end_index = min(job_list_size, start_index + job_size)
+
+        if remaining > 0:
+            end_index += 1
+            remaining -= 1
+
+        if i == n:
+            return start_index, end_index
+
+        start_index = end_index

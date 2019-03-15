@@ -239,12 +239,6 @@ def fix_anomalies(anomalies, channels, missing_value=-111, allowance=None):
 
             channels_timestamp_ratios[data_timestamp_ratio] = [channel]
 
-    '''for k,v in channels_timestamp_ratios.items():
-        print(k)
-        for chan in v:
-            print(chan.name)
-            print(chan.missing_value)'''
-
     fixed_channels = []
     for data_timestamp_ratio, channel_temps in channels_timestamp_ratios.items():
 
@@ -333,9 +327,9 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
     elif anomaly_def["anomaly_type"] == "D" or anomaly_def["anomaly_type"] == "F":
         # truncate each channel data after last good index 
         for channel in channels:
-            channel.data = channel.data[:(last_good_index+1)*dtr]
-            channel.timestamps = channel.timestamps[:last_good_index+1]
+            channel.data = channel.data[:(last_good_index)*dtr]
+            channel.timestamps = channel.timestamps[:last_good_index]
             
-        expected_timestamps = expected_timestamps[:last_good_index+1]
+        expected_timestamps = expected_timestamps[:last_good_index]
             
     return channels, expected_timestamps, anomaly_def  
