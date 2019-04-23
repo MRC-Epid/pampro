@@ -1063,7 +1063,6 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         num_pages = int(header_info["number_pages"])
         obs_num = 0
-        #ts_num = 0
         page = 0
         # Data format contains 300 XYZ values per page
         num = 300
@@ -1075,15 +1074,6 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         battery_values = np.empty(int(num_pages))
         ga_indices = np.empty(int(num_pages))
 
-        # We will timestamp every 1 second of data to the nearest second
-        # 300 / frequency = number of timestamps per page
-        #timestamps_per_page = int(num / header_info["frequency"])
-        #num_timestamps = (timestamps_per_page * header_info["number_pages"]) + 1
-
-        #ga_timestamps = np.empty(int(num_timestamps), dtype=type(header_info["start_datetime_python"]))
-        #ga_indices = np.empty(int(num_timestamps))
-        
-
         # we want a timestamp for each page to assign to the light, temperature and battery data
         page_timestamps = np.empty(int(num_pages), dtype=type(header_info["start_datetime_python"]))
 
@@ -1091,88 +1081,88 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         for i in range(num_pages):
             # xs,ys,zs,times = read_block(data, header_info)
             lines = [data.readline().strip().decode() for l in range(9)]
-            page_time = datetime.strptime(lines[3][10:29],
-                                          "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
-            page_timestamps[page] = page_time
-            ga_indices[page] = obs_num
+            if lines[0] == 'Recorded Data':
+                page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
+                page_timestamps[page] = page_time
+                ga_indices[page] = obs_num
+    
+                # read temperature, for page, in degrees C
+                temperature = lines[5].split(":")[1]
+                # read battery voltage for page
+                battery = lines[6].split(":")[1]
+    
+                # record temperature and battery at page level
+                temperature_values[page] = temperature
+                battery_values[page] = battery
+    
+                # For each 12 byte measurement in page (300 of them)
+                for j in range(num):
+                    # time = page_time + (j * header_info["epoch"])
+                     
+                    block = data.read(12)
+                    if block == b'':
+                        x,y,z = 0,0,0
+                    # Each of x,y,z are given by a 3-digit hexadecimal number
+                    else:
+                        x = int(block[0:3], 16)
+                        y = int(block[3:6], 16)
+                        z = int(block[6:9], 16)
+        
+                        # 'Light' is included in the last 3-digit hexadecimal number, we will only preserve the first light data
+                        # point of each page to include in the page-level data.
+                        if j == 0:
+                            final_block = int(block[9:12], 16)
+                            # Convert to 12 bit binary number
+                            final_binary = "{0:b}".format(final_block).zfill(12)
+                            # light is only the first 10 bits, so drop last 2 bits.
+                            light_binary = final_binary[:-2]
+                            # Then convert to an integer:
+                            light = int(light_binary, 2)
+      
+                        x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
+                    x_values[obs_num] = x
+                    y_values[obs_num] = y
+                    z_values[obs_num] = z
+                    obs_num += 1
+    
+                excess = data.read(2)
+                light_values[page] = light
+    
+                page += 1
+                
+            else:
+                pass    
 
-            # read temperature, for page, in degrees C
-            temperature = lines[5].split(":")[1]
-            # read battery voltage for page
-            
-            battery = lines[6].split(":")[1]
-
-            #ga_timestamps[ts_num] = page_time
-            #ga_indices[ts_num] = obs_num
-
-            # record temperature and battery at page level
-            temperature_values[page] = temperature
-            battery_values[page] = battery
-
-            #for k in range(timestamps_per_page):
-                #ga_timestamps[ts_num + 1] = page_time + (timedelta(seconds=1) * (k + 1))
-                #ga_indices[ts_num + 1] = obs_num + (int(header_info["frequency"]) * (k + 1))
-                #ts_num += 1
-
-            # For each 12 byte measurement in page (300 of them)
-            for j in range(num):
-                # time = page_time + (j * header_info["epoch"])
-
-                block = data.read(12)
-
-                # Each of x,y,z are given by a 3-digit hexadecimal number
-                x = int(block[0:3], 16)
-                y = int(block[3:6], 16)
-                z = int(block[6:9], 16)
-
-                # 'Light' is included in the last 3-digit hexadecimal number, we will only preserve the first light data
-                # point of each page to include in the page-level data.
-                if j == 0:
-                    final_block = int(block[9:12], 16)
-                    # Convert to 12 bit binary number
-                    final_binary = "{0:b}".format(final_block).zfill(12)
-                    # light is only the first 10 bits, so drop last 2 bits.
-                    light_binary = final_binary[:-2]
-                    # Then convert to an integer:
-                    light = int(light_binary, 2)
-
-                x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
-                x_values[obs_num] = x
-                y_values[obs_num] = y
-                z_values[obs_num] = z
-                obs_num += 1
-
-            excess = data.read(2)
-            light_values[page] = light
-
-            page += 1
-
-        # Timestamp the final observation
-        #ga_timestamps[-1] = page_time + (num * (timedelta(seconds=1) / header_info["frequency"]))
-        #ga_indices[-1] = obs_num
-        ga_indices = ga_indices.astype(int)
+        # in cases where the number of pages in incorrect, trim page-timestamps and ga_indices arrays, 
+        # using 'page' which is a counter of the number of pages, or 'obs_num' which is a counter of samples
+        safe_timestamps = np.resize(page_timestamps, page)  
+        safe_indices = np.resize(ga_indices, page)
+        safe_x = np.resize(x_values, obs_num)
+        safe_y = np.resize(y_values, obs_num)
+        safe_z = np.resize(z_values, obs_num)
+        safe_light = np.resize(light_values, page)
+        safe_temperature = np.resize(temperature_values, page)
+        safe_battery = np.resize(battery_values, page)
+        safe_indices = safe_indices.astype(int)
 
         # calibrate the x, y, z and light data using the monitor's given calibration parameters.
-        x_values = np.array([(x * 100.0 - header_info["x_offset"]) / header_info["x_gain"] for x in x_values])
-        y_values = np.array([(y * 100.0 - header_info["y_offset"]) / header_info["y_gain"] for y in y_values])
-        z_values = np.array([(z * 100.0 - header_info["z_offset"]) / header_info["z_gain"] for z in z_values])
-        light_values = np.array([(light * header_info["lux"]) / header_info["volts"] for light in light_values])
+        safe_x = np.array([(x * 100.0 - header_info["x_offset"]) / header_info["x_gain"] for x in safe_x])
+        safe_y = np.array([(y * 100.0 - header_info["y_offset"]) / header_info["y_gain"] for y in safe_y])
+        safe_z = np.array([(z * 100.0 - header_info["z_offset"]) / header_info["z_gain"] for z in safe_z])
+        safe_light = np.array([(light * header_info["lux"]) / header_info["volts"] for light in safe_light])
 
-        # Map the second-level timestamps to the acceleration data "sparsely"
-        #channel_x.set_contents(x_values, ga_timestamps, timestamp_policy="sparse")
-        #channel_y.set_contents(y_values, ga_timestamps, timestamp_policy="sparse")
-        #channel_z.set_contents(z_values, ga_timestamps, timestamp_policy="sparse")
-        channel_x.set_contents(x_values, page_timestamps, timestamp_policy="sparse")
-        channel_y.set_contents(y_values, page_timestamps, timestamp_policy="sparse")
-        channel_z.set_contents(z_values, page_timestamps, timestamp_policy="sparse")
+        # Map the page-level timestamps to the x, y,and z data "sparsely"
+        channel_x.set_contents(safe_x, safe_timestamps, timestamp_policy="sparse")
+        channel_y.set_contents(safe_y, safe_timestamps, timestamp_policy="sparse")
+        channel_z.set_contents(safe_z, safe_timestamps, timestamp_policy="sparse")
 
         # Map the page-level timestamps to the temperature, battery and light data "normally"
-        channel_temperature.set_contents(temperature_values, page_timestamps, timestamp_policy="normal")
-        channel_battery.set_contents(battery_values, page_timestamps, timestamp_policy="normal")
-        channel_light.set_contents(light_values, page_timestamps, timestamp_policy="normal")
+        channel_temperature.set_contents(safe_temperature, safe_timestamps, timestamp_policy="normal")
+        channel_battery.set_contents(safe_battery, safe_timestamps, timestamp_policy="normal")
+        channel_light.set_contents(safe_light, safe_timestamps, timestamp_policy="normal")
 
         for c in [channel_x, channel_y, channel_z]:
-            c.indices = ga_indices
+            c.indices = safe_indices
             c.frequency = header_info["frequency"]
 
         channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
@@ -1915,50 +1905,59 @@ def fast_load(source, source_type):
         # For each page
         for i in range(num_pages):
             lines = [data.readline().strip().decode() for l in range(9)]
-            page_time = datetime.strptime(lines[3][10:29],
-                                          "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
-            page_timestamps[page] = page_time
+            if lines[0] == 'Recorded Data':
 
-            # read temperature, for page, in degrees C
-            temperature = lines[5].split(":")[1]
-            # read battery voltage for page
-            battery = lines[6].split(":")[1]
-
-            # record temperature and battery at page level
-            temperature_values[page] = temperature
-            battery_values[page] = battery
-
-            block = data.read(12)
-
-            # Each of x,y,z are given by a 3-digit hexadecimal number
-            x = int(block[0:3], 16)
-            y = int(block[3:6], 16)
-            z = int(block[6:9], 16)
-
-            # 'Light' is included in the last 3-digit hexadecimal number
-            final_block = int(block[9:12], 16)
-            # Convert to 12 bit binary number
-            final_binary = "{0:b}".format(final_block).zfill(12)
-            # light is only the first 10 bits, so drop last 2 bits.
-            light_binary = final_binary[:-2]
-            # Then convert to an integer:
-            light = int(light_binary, 2)
-
-            x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
-
-            x_values[page] = x
-            y_values[page] = y
-            z_values[page] = z
-            light_values[page] = light
-
-            # skip over the remaining samples for the page
-            bytes_to_skip = 12 * (num - 1)
-            skip = data.read(bytes_to_skip)
-
-            excess = data.read(2)
-
-            ga_indices[page] = page
-            page += 1
+              page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
+              page_timestamps[page] = page_time
+  
+              # read temperature, for page, in degrees C
+              temperature = lines[5].split(":")[1]
+              # read battery voltage for page
+              battery = lines[6].split(":")[1]
+  
+              # record temperature and battery at page level
+              temperature_values[page] = temperature
+              battery_values[page] = battery
+  
+              block = data.read(12)
+  
+              # Each of x,y,z are given by a 3-digit hexadecimal number
+              x = int(block[0:3], 16)
+              y = int(block[3:6], 16)
+              z = int(block[6:9], 16)
+  
+              # 'Light' is included in the last 3-digit hexadecimal number
+              final_block = int(block[9:12], 16)
+              # Convert to 12 bit binary number
+              final_binary = "{0:b}".format(final_block).zfill(12)
+              # light is only the first 10 bits, so drop last 2 bits.
+              light_binary = final_binary[:-2]
+              # Then convert to an integer:
+              light = int(light_binary, 2)
+  
+              x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
+  
+              x_values[page] = x
+              y_values[page] = y
+              z_values[page] = z
+              light_values[page] = light
+  
+              # skip over the remaining samples for the page
+              bytes_to_skip = 12 * (num - 1)
+              skip = data.read(bytes_to_skip)
+  
+              excess = data.read(2)
+  
+              ga_indices[page] = page
+              page += 1
+            
+            else:
+              pass
+              
+        # in cases where the number of pages in incorrect, trim page-timestamps and ga_indices arrays, 
+        # using 'page' which is a counter of the number of pages
+        safe_timestamps = np.resize(page_timestamps, page)  
+        safe_indices = np.resize(ga_indices, page)
 
         # calibrate the x, y, z and light data using the monitor's given calibration parameters.
         x_values = np.array([(x * 100.0 - header_info["x_offset"]) / header_info["x_gain"] for x in x_values])
@@ -1967,17 +1966,17 @@ def fast_load(source, source_type):
         light_values = np.array([(light * header_info["lux"]) / header_info["volts"] for light in light_values])
 
         # Map the second-level timestamps to the acceleration data "sparsely"
-        channel_x.set_contents(x_values, page_timestamps, timestamp_policy="normal")
-        channel_y.set_contents(y_values, page_timestamps, timestamp_policy="normal")
-        channel_z.set_contents(z_values, page_timestamps, timestamp_policy="normal")
+        channel_x.set_contents(x_values, safe_timestamps, timestamp_policy="normal")
+        channel_y.set_contents(y_values, safe_timestamps, timestamp_policy="normal")
+        channel_z.set_contents(z_values, safe_timestamps, timestamp_policy="normal")
 
         # Map the page-level timestamps to the temperature, battery and light data "normally"
-        channel_temperature.set_contents(temperature_values, page_timestamps, timestamp_policy="normal")
-        channel_battery.set_contents(battery_values, page_timestamps, timestamp_policy="normal")
-        channel_light.set_contents(light_values, page_timestamps, timestamp_policy="normal")
+        channel_temperature.set_contents(temperature_values, safe_timestamps, timestamp_policy="normal")
+        channel_battery.set_contents(battery_values, safe_timestamps, timestamp_policy="normal")
+        channel_light.set_contents(light_values, safe_timestamps, timestamp_policy="normal")
 
         for c in [channel_x, channel_y, channel_z]:
-            c.indices = ga_indices
+            c.indices = safe_indices
             c.frequency = header_info["frequency"]
 
         channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]

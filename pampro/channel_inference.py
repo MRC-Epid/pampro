@@ -88,8 +88,9 @@ def infer_pitch_roll(x,y,z):
     pitch = Channel("Pitch")
     roll = Channel("Roll")
 
-    pitch_degrees = np.arctan(x.data/np.sqrt((y.data*y.data) + (z.data*z.data))) * 180.0/np.pi
-    roll_degrees = np.arctan(y.data/np.sqrt((x.data*x.data) + (z.data*z.data))) * 180.0/np.pi
+    # include "+ 0.0000000000001" into the equation to avoid the instances where y and z, or x and z, are both zero and therefore the equation resolves to division by zero.
+    pitch_degrees = np.arctan(x.data/np.sqrt((y.data*y.data) + (z.data*z.data) + 0.0000000000001)) * 180.0/np.pi
+    roll_degrees = np.arctan(y.data/np.sqrt((x.data*x.data) + (z.data*z.data) + 0.0000000000001)) * 180.0/np.pi
 
     pitch.set_contents( pitch_degrees, x.timestamps)
     roll.set_contents( roll_degrees, x.timestamps)
