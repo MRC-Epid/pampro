@@ -1095,15 +1095,14 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                 temperature_values[page] = temperature
                 battery_values[page] = battery
     
-                # For each 12 byte measurement in page (300 of them)
-                for j in range(num):
-                    # time = page_time + (j * header_info["epoch"])
-                     
-                    block = data.read(12)
-                    if block == b'':
-                        x,y,z = 0,0,0
-                    # Each of x,y,z are given by a 3-digit hexadecimal number
-                    else:
+                # If the block data is not corrupt...
+                try:
+                    # For each 12 byte measurement in page (300 of them)
+                    for j in range(num):
+                        # time = page_time + (j * header_info["epoch"])
+                         
+                        block = data.read(12)
+                        # Each of x,y,z are given by a 3-digit hexadecimal number
                         x = int(block[0:3], 16)
                         y = int(block[3:6], 16)
                         z = int(block[6:9], 16)
@@ -1120,15 +1119,18 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                             light = int(light_binary, 2)
       
                         x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
-                    x_values[obs_num] = x
-                    y_values[obs_num] = y
-                    z_values[obs_num] = z
-                    obs_num += 1
-    
-                excess = data.read(2)
-                light_values[page] = light
-    
-                page += 1
+                        x_values[obs_num] = x
+                        y_values[obs_num] = y
+                        z_values[obs_num] = z
+                        obs_num += 1
+        
+                    excess = data.read(2)
+                    light_values[page] = light
+        
+                    page += 1
+                    
+                except ValueError:
+                    pass
                 
             else:
                 pass    
