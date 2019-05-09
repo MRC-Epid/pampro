@@ -1082,19 +1082,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             # xs,ys,zs,times = read_block(data, header_info)
             lines = [data.readline().strip().decode() for l in range(9)]
             if lines[0] == 'Recorded Data':
-                page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:])*1000)
-                page_timestamps[page] = page_time
-                ga_indices[page] = obs_num
-    
-                # read temperature, for page, in degrees C
-                temperature = lines[5].split(":")[1]
-                # read battery voltage for page
-                battery = lines[6].split(":")[1]
-    
-                # record temperature and battery at page level
-                temperature_values[page] = temperature
-                battery_values[page] = battery
-    
+
                 # If the block data is not corrupt...
                 try:
                     # For each 12 byte measurement in page (300 of them)
@@ -1123,10 +1111,23 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                         y_values[obs_num] = y
                         z_values[obs_num] = z
                         obs_num += 1
-        
+
+                    page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:]) * 1000)
+                    page_timestamps[page] = page_time
+                    ga_indices[page] = obs_num
+
+                    # read temperature, for page, in degrees C
+                    temperature = lines[5].split(":")[1]
+                    # read battery voltage for page
+                    battery = lines[6].split(":")[1]
+
                     excess = data.read(2)
                     light_values[page] = light
-        
+
+                    # record temperature and battery at page level
+                    temperature_values[page] = temperature
+                    battery_values[page] = battery
+
                     page += 1
                     
                 except ValueError:

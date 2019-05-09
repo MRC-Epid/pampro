@@ -232,7 +232,7 @@ def define_statistics(stats_list, intensities_list, angles_list):
     stats = OrderedDict()
     if 'enmo' in stats_list:
         stats["ENMO"] = [("generic", ["mean", "n", "missing", "sum"]), ("cutpoints", intensities_list)]
-    if 'hpvfm' in stats_list:
+    if 'hpfvm' in stats_list:
         stats["HPFVM"] = [("generic", ["mean", "n", "missing", "sum"]), ("cutpoints", intensities_list)]
     if 'pitch' in stats_list:
         stats["PITCH"] = [("generic", ["mean", "std", "min", "max"]), ("cutpoints", angles_list)]
