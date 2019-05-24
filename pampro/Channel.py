@@ -24,7 +24,7 @@ class Channel(object):
         self.draw_properties = {}
         self.cached_indices = {}
         self.timestamp_policy = "normal" # sparse, offset
-        self.missing_value = False
+        self.missing_value = None # changed from False, as false can include zero in some circumstances 24/5/19
 
 
     def clone(self):
@@ -368,7 +368,8 @@ class Channel(object):
         initial_n = len(window_data)
         missing_n = 0
 
-        if self.missing_value is not False:
+        # check if the missing value of the channel has a value (i.e. 0, -1, -111)
+        if self.missing_value is not None:
             window_data = window_data[window_data != self.missing_value]
             missing_n = initial_n - len(window_data)
 
@@ -833,7 +834,7 @@ class Channel(object):
         This masks the data when being summarised by any statistic methods. """
 
         # New approach - don't delete the data, mask it with a set value
-        # Then when we summarise, check if data has been masked (missing_value is not False)
+        # Then when we summarise, check if data has been masked (missing_value is not None)
         # Then analyse only unmasked data
         self.fill_windows(windows, fill_value=missing_value)
         self.missing_value = missing_value
