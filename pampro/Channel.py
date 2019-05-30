@@ -170,16 +170,23 @@ class Channel(object):
         """ Make this Channel inherit all the time properties of the given Channel. """
 
         self.timestamps = channel.timestamps
-        self.missing_value = channel.missing_value
         self.timestamp_policy = channel.timestamp_policy
         self.indices = channel.indices
         self.cached_indices = channel.cached_indices
         self.timeframe = channel.timeframe
         self.time_period = channel.time_period
 
-        for i in range(len(self.data)):
-            if channel.data[i] == channel.missing_value:
-                self.data[i] = self.missing_value
+        # for backwards compatibility, if channel has been saved with missing_value = False,
+        # then give the new channel the missing_value of "None"
+        if not channel.missing_value:
+            self.missing_value = "None"
+        # Else, inherit missing value from channel
+        else:
+            self.missing_value = channel.missing_value
+
+            for i in range(len(self.data)):
+                if channel.data[i] == channel.missing_value:
+                    self.data[i] = self.missing_value
 
         try:
             self.frequency = channel.frequency
