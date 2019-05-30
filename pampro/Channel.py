@@ -24,8 +24,7 @@ class Channel(object):
         self.draw_properties = {}
         self.cached_indices = {}
         self.timestamp_policy = "normal" # sparse, offset
-        self.missing_value = None # changed from False, as false can include zero in some circumstances 24/5/19
-
+        self.missing_value = "None" # changed from False, as false can include zero in some circumstances 24/5/19
 
     def clone(self):
         """ Return an independent copy of this Channel. """
@@ -369,7 +368,7 @@ class Channel(object):
         missing_n = 0
 
         # check if the missing value of the channel has a value (i.e. 0, -1, -111)
-        if self.missing_value is not None:
+        if self.missing_value != "None":
             window_data = window_data[window_data != self.missing_value]
             missing_n = initial_n - len(window_data)
 
@@ -893,6 +892,41 @@ class Channel(object):
         for a in annotations:
             self.add_annotation(a)
 
+    def channel_max_decrease(self, time_period=timedelta(hours=24), iterator=25):
+        """Takes a channel and returns the maximum reduction over a given time period (NOT ABSOLUTE),
+        iterating through the channel using a given iterator """
+
+        if self.timestamp_policy == "offset":
+            start_index = self.get_offset_data_index(self.timeframe[0])
+            end_index = self.get_offset_data_index(self.timeframe[0] + time_period)
+            end_file_index = self.get_offset_data_index(self.timeframe[-1])
+
+        elif self.timestamp_policy == "normal":
+            start_index = self.get_data_index(self.timeframe[0])
+            end_index = self.get_data_index(self.timeframe[0] + time_period)
+            end_file_index = self.get_data_index(self.timeframe[-1])
+
+        elif self.timestamp_policy == "sparse":
+            start_index = self.get_sparse_data_index(self.timeframe[0])
+            end_index = self.get_sparse_data_index(self.timeframe[0] + time_period)
+            end_file_index = self.get_sparse_data_index(self.timeframe[-1])
+
+        else:
+            return "Timestamp policy for data channel not recognised"
+
+        max_diff = 0
+
+        while end_index <= end_file_index:
+
+            difference = self.data[start_index] - self.data[end_index]
+
+            if difference > max_diff:
+                max_diff = difference
+
+            start_index += iterator
+            end_index += iterator
+
+        return max_diff
 
     def draw(self, axis, time_period=False):
 
