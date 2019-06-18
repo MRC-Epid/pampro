@@ -331,5 +331,34 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
             channel.timestamps = channel.timestamps[:last_good_index]
             
         expected_timestamps = expected_timestamps[:last_good_index]
+
+    for channel in channels:
+        channel.missing_value = missing_value
             
     return channels, expected_timestamps, anomaly_def  
+    
+
+def diagnose_axes(x, y, z, window_size=timedelta(minutes=10), noise_cutoff_mg=13):
+    """Returns a dict of max and min axis values for a set time period (window_size) of stillness"""
+
+    x_std = x.piecewise_statistics(window_size, statistics=[("generic", ["std"])], time_period=x.timeframe)[0]
+    y_std = y.piecewise_statistics(window_size, statistics=[("generic", ["std"])], time_period=y.timeframe)[0]
+    z_std = z.piecewise_statistics(window_size, statistics=[("generic", ["std"])], time_period=z.timeframe)[0]
+
+    # Find bouts where standard deviation is below threshold for long periods
+    x_bouts = x_std.bouts(0, float(noise_cutoff_mg)/1000.0)
+    y_bouts = y_std.bouts(0, float(noise_cutoff_mg)/1000.0)
+    z_bouts = z_std.bouts(0, float(noise_cutoff_mg)/1000.0)
+    
+    still_x, std_x = x.build_statistics_channels(x_bouts, [("generic", ["mean", "std"])])
+    still_y, std_y = y.build_statistics_channels(y_bouts, [("generic", ["mean", "std"])])
+    still_z, std_z = z.build_statistics_channels(z_bouts, [("generic", ["mean", "std"])])
+    
+    axes_dict = dict()
+    
+    for chan in [still_x, still_y, still_z]:
+        axes_dict["{}_max".format(chan.name.replace("_mean",""))] = max(chan.data)
+        axes_dict["{}_min".format(chan.name.replace("_mean",""))] = min(chan.data)
+            
+    return axes_dict
+            
