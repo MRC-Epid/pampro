@@ -78,12 +78,12 @@ def calibrate_stepone(x, y, z, temperature=None, battery=None, budget=1000, nois
     # Summarise VM in 10s intervals
     vm_windows = vm.piecewise_statistics(timedelta(seconds=10), [("generic", ["mean"])], time_period=vm.timeframe)[0]
 
-    # Get a list where VM was between 0.5 and 1.5g ("reasonable")
-    reasonable_bouts = vm_windows.bouts(0.5, 1.5)
+    # Get a list where VM was between 0.8 and 1.2g ("reasonable") # resonable criteria changed from between 0.5 and 1.5g as considered too broad 25/06/19
+    reasonable_bouts = vm_windows.bouts(0.8, 1.2)
     num_reasonable_bouts = len(reasonable_bouts)
     num_reasonable_seconds = total_time(reasonable_bouts).total_seconds()
 
-    # We only want still bouts where the VM level was within 0.5g of 1g
+    # We only want still bouts where the VM level was within 0.2g of 1g (previously within 0.5g of 1g, see above)
     # Therefore intersect "still" time with "reasonable" time
     still_bouts = bout_list_intersection(reasonable_bouts, still_bouts)
 
