@@ -6,6 +6,7 @@ pampro is a software project for the systematic analysis of physical activity da
 
 ### Downloading pampro
 There are two options available for downloading pampro, depending on whether you wish to use Git.  Option 1 (**which is recommended**) requires Git to be installed in your environment ([https://git-scm.com/](url)).
+
 1.  EITHER use the command line to navigate to your desired folder location and execute the following command:
 `git clone https://github.com/MRC-Epid/pampro/`
 
@@ -16,6 +17,7 @@ Whichever download option you use, you will now have a folder containing the pam
 
 1. Execute the following command, where <pampro_folder> is the top-level pampro folder (which contains the setup.py file):
 `pip install <pampro_folder>`
+
 2. Check the install by executing this command: `pip show pampro`
 This will display metadata about the module.
 
@@ -25,7 +27,7 @@ This will update the contents of the folder with the current contents of this re
 
 However, if you downloaded the module in ZIP format you will need to do the same and replace the contents of your original pampro folder with the newly-downloaded contents.  **This is why the use of Git is recommended - it is easier to update the code.**
 
-
+Next, uninstall pampro using `pip uninstall pampro`, then reinstall as per the instructions in **Installation**.
 
 ### New in version v0.5 
 
