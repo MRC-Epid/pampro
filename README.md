@@ -5,7 +5,7 @@
 pampro is a software project for the systematic analysis of physical activity data collected in epidemiological studies. The ultimate goal is to provide a turn-key solution for physical activity data analysis, replicating published methodologies in a monitor-agnostic framework.
 
 
-### New in version v0.5.0 
+### New in version v0.5 
 
 * Import additional time series data (light, battery level and temperature data, depending on monitor type) from these common monitor file types:
 
@@ -17,7 +17,7 @@ pampro is a software project for the systematic analysis of physical activity da
 
 * Use the calibration "database" to calibrate files.
 
-* A new 'diagnostics' module for the detection and resolution of timestamping anomalies within raw Axivity binary (.cwa) or GeneActiv (.bin) files.
+* A new 'diagnostics' module for the detection and resolution of timestamp and axis anomalies within raw waveform accelerometry files.
 
 
 ### Features
