@@ -1,3 +1,12 @@
+# pampro - physical activity monitor processing
+# Copyright (C) 2019  MRC Epidemiology Unit, University of Cambridge
+#   
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+#   
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 from scipy.io.wavfile import write
 from scipy.interpolate import interp1d
 from bisect import bisect_left, bisect_right
@@ -25,6 +34,7 @@ class Channel(object):
         self.cached_indices = {}
         self.timestamp_policy = "normal" # sparse, offset
         self.missing_value = "None" # changed from False, as false can include zero in some circumstances 24/5/19
+        self.binary_data = False # set to "True" in order to preserve the data as a binary (0/1) channel in other functions
 
     def clone(self):
         """ Return an independent copy of this Channel. """
@@ -108,6 +118,12 @@ class Channel(object):
             # func is a function, so we just give it new hypothetical offsets
             new_data = func(new_timestamps)
 
+            # when resampling a binary data channel we want to change any value > 0 to 1, and so preserve its binary nature.
+            if self.binary_data:
+                indices = np.where(new_data>0)[0]
+                for i in indices:
+                    new_data[i] = 1
+
             self.cached_indices = {}
             self.set_contents(new_data, new_timestamps, timestamp_policy=self.timestamp_policy)
             self.frequency = frequency
@@ -184,9 +200,12 @@ class Channel(object):
         else:
             self.missing_value = channel.missing_value
 
-            for i in range(len(self.data)):
-                if channel.data[i] == channel.missing_value:
-                    self.data[i] = self.missing_value
+            # Assign missing values at the same points in the new channel
+            # ONLY IF self.missing_value is not equal to "None"
+            if channel.missing_value != "None":
+                for i in range(len(self.data)):
+                    if channel.data[i] == channel.missing_value:
+                        self.data[i] = self.missing_value
 
         try:
             self.frequency = channel.frequency
@@ -370,6 +389,7 @@ class Channel(object):
             start_index,end_index = self.get_window(start_dts, end_dts)
 
         window_data = self.data[start_index:end_index]
+        window_data_binary = self.data[start_index:end_index]
         #print(start_dts,end_dts,window_data)
         initial_n = len(window_data)
         missing_n = 0
@@ -381,6 +401,7 @@ class Channel(object):
 
         output_row = []
         data_found = len(window_data) > 0
+        data_found_binary = len(window_data_binary) > 0
         #if (len(window_data) > 0):
 
         # Cache the frequency spectrum, at least 1 statistic needs it
@@ -444,8 +465,25 @@ class Channel(object):
                     elif val == "missing":
 
                         output_row.append(missing_n)
-
-
+                        
+            elif stat[0] == "binary":        
+            # for binary channels (0/1)
+            # Example: ("binary", ["flag"])
+                    
+                for val in stat[1]:
+                    if val == "flag":
+                        
+                        if data_found_binary:
+                            # will flag a window with value "0" if max of data = 0, else flag with value "1"
+                            if np.max(window_data_binary) == 0:
+                                output_row.append(0)
+                            else:
+                                output_row.append(1)
+                        
+                        # or else missing (-1)
+                        else:
+                            output_row.append(-1)
+                            
             elif stat[0] == "cutpoints":
             # Example: ("cutpoints", [[0,10],[10,20],[20,30]])
 
@@ -585,6 +623,9 @@ class Channel(object):
         for stat in statistics:
             if stat[0] == "generic":
                 expected += len(stat[1])
+                
+            elif stat[0] == "binary":
+                expected += len(stat[1])    
 
             elif stat[0] == "cutpoints":
                 expected += len(stat[1])
@@ -857,7 +898,6 @@ class Channel(object):
 
         self.delete_windows([bout1, bout2])
 
-
     def fill(self, bout, fill_value=0):
         """ Given a Bout representing a window of time, replace all the data values of this Channel within the time window with a given fill_value. """
 
@@ -925,10 +965,15 @@ class Channel(object):
 
         while end_index <= end_file_index:
 
-            difference = self.data[start_index] - self.data[end_index]
+            # check start and end values are not "missing values", if they are then we'll skip this sector as unreliable
+            if self.data[start_index] == self.missing_value or self.data[end_index-1] == self.missing_value:
+                pass
 
-            if difference > max_diff:
-                max_diff = difference
+            else:
+                difference = self.data[start_index] - self.data[end_index-1]
+
+                if difference > max_diff:
+                    max_diff = difference
 
             start_index += iterator
             end_index += iterator
@@ -1017,7 +1062,6 @@ def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skelet
         result = skeleton.clone()
         result.name = channel_name
         result.data.fill(out_value)
-
 
     for bout in bouts:
         result.fill(bout, in_value)

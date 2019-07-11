@@ -1,3 +1,12 @@
+# pampro - physical activity monitor processing
+# Copyright (C) 2019  MRC Epidemiology Unit, University of Cambridge
+#   
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+#   
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import h5py
@@ -5,18 +14,16 @@ import numpy as np
 import math
 
 
-
-
 def list_caches(hdf5_file):
     """
     List the name of any functions that have their results cached in this file.
     """
-
     if "cache" in hdf5_file:
 
         return list(hdf5_file["cache"].keys())
     else:
         return "Empty"
+
 
 def get_appropriate_cache(name, args, parameter_names, hdf5_file):
     """
@@ -43,6 +50,7 @@ def get_appropriate_cache(name, args, parameter_names, hdf5_file):
     # None of the caches under "cache/name" were ran with the same parameters
     return None
 
+
 def make_cache(name, args, parameter_names, hdf5_file):
     """
     Create a HDF5 group suitable for caching the results of a process.
@@ -66,6 +74,7 @@ def make_cache(name, args, parameter_names, hdf5_file):
         hdf5_group.attrs[param] = str(args[param])
 
     return hdf5_group
+
 
 def do_if_not_cached(name, method, args, parameter_names, getter, setter, hdf5_file):
     """
@@ -103,6 +112,7 @@ def do_if_not_cached(name, method, args, parameter_names, getter, setter, hdf5_f
 
     return r
 
+
 def delete_cache(hdf5_file):
     """
     Delete the cache folder and its subfolders. Any subsequent query on the cache will conclude nothing has been cached.
@@ -117,13 +127,15 @@ def delete_cache(hdf5_file):
     except:
         return False
 
+
 def dictionary_to_attributes(dictionary, hdf5_thing):
     """
     Write each item in the given dictionary as an attribute attached to the HDF5 group or dataset.
     """
 
-    for k,v in dictionary.items():
+    for k, v in dictionary.items():
         hdf5_thing.attrs[k] = v
+
 
 def dictionary_from_attributes(hdf5_thing):
     """
@@ -131,10 +143,11 @@ def dictionary_from_attributes(hdf5_thing):
     """
 
     dictionary = OrderedDict()
-    for k,v in hdf5_thing.attrs.items():
+    for k, v in hdf5_thing.attrs.items():
         dictionary[k] = v
 
     return dictionary
+
 
 def load_bouts_from_hdf5_group(hdf5_group):
     """
@@ -319,9 +332,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         first_channel = ts[channels[0]]
         timestamps = first_channel.timestamps
         data_length = len(first_channel.data)
-        print(first_channel, "data_length", data_length)
         timestamp_length = len(timestamps)
-        print("timestamp_length", timestamp_length)
 
         # set attributes for the first group only
         if file_header is not None:

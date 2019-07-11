@@ -1,3 +1,12 @@
+# pampro - physical activity monitor processing
+# Copyright (C) 2019  MRC Epidemiology Unit, University of Cambridge
+#   
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+#   
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import re
 import collections
 from collections import OrderedDict
@@ -17,6 +26,11 @@ def design_variable_names(signal_name, stat):
         for val1 in stat[1]:
             varnames.append(signal_name + "_" + val1)
 
+    if (stat[0] == "binary"):
+
+        for val1 in stat[1]:
+            varnames.append(signal_name + "_" + val1)
+    
     elif (stat[0] == "cutpoints"):
 
         for low,high in stat[1]:
@@ -242,5 +256,7 @@ def define_statistics(stats_list, intensities_list, angles_list):
         stats["Temperature"] = [("generic", ["mean"])]
     if 'battery' in stats_list:
         stats["Battery"] = [("generic", ["mean"])]
+    if 'integrity' in stats_list:
+        stats["Integrity"] = [("generic", ["mean"])]
 
     return stats

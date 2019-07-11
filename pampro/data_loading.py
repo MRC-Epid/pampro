@@ -1,8 +1,19 @@
+# pampro - physical activity monitor processing
+# Copyright (C) 2019  MRC Epidemiology Unit, University of Cambridge
+#   
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+#   
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+# python-uos-activpal open source python module distributed under GNU General Public License v2.0
+# Source: https://pypi.org/project/uos-activpal/
+
+import uos_activpal.io.raw as ap_read
 
 import io
-
 from itertools import chain
-
 from .diagnostics import *
 
 # CWA Metadata Reader by Dan Jackson, 2017.
@@ -15,6 +26,7 @@ from .diagnostics import *
 # 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 def twos_comp(val, bits):
     if ((val & (1 << (bits - 1))) != 0):
         val = val - (1 << bits)
@@ -349,7 +361,7 @@ def convert_actigraph_timestamp(t):
 
 
 def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", datetime_column=0, ignore_columns=False,
-         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None, anomalies_file=None):
+         unique_names=False, hdf5_mode="r", hdf5_group="Raw", hdf5_groups=None, anomalies_file=None, compress=True):
     load_start = datetime.now()
     
     header = OrderedDict()
@@ -379,7 +391,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                 "Cannot assume file type from extension ({}), specify source_type when trying to load this file.".format(
                     extension))
 
-    if (source_type == "Actiheart"):
+    if source_type == "Actiheart":
 
         first_lines = []
         f = open(source, 'r')
@@ -424,7 +436,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         header = header_info
         channels = [actiheart_activity, actiheart_ecg]
 
-    elif (source_type == "activPAL_CSV"):
+    elif source_type == "activPAL_CSV":
 
         ap_timestamp, ap_x, ap_y, ap_z = np.loadtxt(source, delimiter=',', unpack=True, skiprows=5,
                                                     dtype={'names': ('ap_timestamp', 'ap_x', 'ap_y', 'ap_z'),
@@ -459,8 +471,12 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         # print("C")
         channels = [x, y, z]
 
-    elif (source_type == "activPAL"):
+    elif source_type == "activPAL":
 
+        metadata = ap_read.extract_metadata_from_file(source)
+
+        header.update(metadata._asdict())
+        
         f = open(source, "rb")
         data = f.read()
         filesize = len(data)
@@ -504,6 +520,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         x = np.zeros(num_records)
         y = np.zeros(num_records)
         z = np.zeros(num_records)
+        integrity = np.zeros(num_records)
 
         x.fill(-1.1212121212121)
         y.fill(-1.1212121212121)
@@ -572,6 +589,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                 """
                 break
 
+        integrity.resize(n)
         x.resize(n)
         y.resize(n)
         z.resize(n)
@@ -591,21 +609,23 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         x_channel = Channel("X")
         y_channel = Channel("Y")
         z_channel = Channel("Z")
+        integrity_channel = Channel("Integrity")
 
         x_channel.set_contents(x, timestamps)
         y_channel.set_contents(y, timestamps)
         z_channel.set_contents(z, timestamps)
-
-        for c in [x_channel, y_channel, z_channel]:
+        integrity_channel.set_contents(integrity, timestamps)
+        integrity_channel.binary_data = True
+        
+        for c in [x_channel, y_channel, z_channel, integrity_channel]:
             c.sparsely_timestamped = False
             c.frequency = sampling_frequency
 
-        header["frequency"] = sampling_frequency
         header["dynamic_range"] = dynamic_range
+        
+        channels = [x_channel, y_channel, z_channel, integrity_channel]
 
-        channels = [x_channel, y_channel, z_channel]
-
-    elif (source_type == "GeneActiv_CSV"):
+    elif source_type == "GeneActiv_CSV":
 
         ga_timestamp, ga_x, ga_y, ga_z, ga_lux, ga_event, ga_temperature = np.genfromtxt(source, delimiter=',',
                                                                                          unpack=True, skip_header=80,
@@ -641,7 +661,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         channels = [x, y, z, lux, event, temperature]
 
-    elif (source_type == "Actigraph"):
+    elif source_type == "Actigraph":
 
         first_lines = []
         f = open(source, 'r')
@@ -693,81 +713,67 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         channels = [chan]
         header = header_info
 
-
-    elif (source_type == "GT3X+_CSV"):
+    elif source_type.startswith("GT3X+_CSV"):
 
         first_lines = []
-        f = open(source, 'r')
-        for i in range(0,10):
-            s = f.readline().strip()
-            first_lines.append(s)
-        f.close()
+        
+        # if source file is zipped, unzip to read:
+        if source_type.endswith("_ZIP"):
+            archive = zipfile.ZipFile(source)
+            csv_not_zip = source.split("/")[-1].replace(".zip", ".csv")
+            file_handle = archive.open(csv_not_zip)
+            for i in range(0,10):
+                s = file_handle.readline().strip().decode("utf-8")
+                first_lines.append(s)
+
+        else:
+            file_handle = open(source, "r")
+            for i in range(0,10):
+                s = file_handle.readline().strip()
+                first_lines.append(s)
 
         header_info = parse_header(first_lines, "GT3X+_CSV", "")
 
         time = header_info["start_datetime"]
         epoch_length = header_info["epoch_length"]
 
-        timestamps = np.genfromtxt(source, delimiter=',', converters={0:convert_actigraph_timestamp}, skip_header=11, usecols=(0))
+        if source_type.endswith("_ZIP"):
+            file_handle = archive.open(csv_not_zip)
+        else:
+            file_handle = source
+        
+        timestamps = np.genfromtxt(file_handle, delimiter=',', converters={0:convert_actigraph_timestamp}, skip_header=11, usecols=(0))
 
-        x,y,z = np.genfromtxt(source, delimiter=',', skip_header=11, usecols=(1,2,3), unpack=True)
+        if source_type.endswith("_ZIP"):
+            file_handle = archive.open(csv_not_zip)
+        else:
+            file_handle = source
+        
+        x,y,z = np.genfromtxt(file_handle, delimiter=',', skip_header=11, usecols=(1,2,3), unpack=True)
+        
+        integrity = np.zeros(len(x))
 
+        file_handle.close()
 
         x_chan = Channel("X")
         y_chan = Channel("Y")
         z_chan = Channel("Z")
+        integrity_chan = Channel("Integrity")
 
         x_chan.set_contents(x, timestamps)
         y_chan.set_contents(y, timestamps)
         z_chan.set_contents(z, timestamps)
+        integrity_chan.set_contents(integrity, timestamps)
+        integrity_chan.binary_data = True
 
-        for c in [x_chan, y_chan, z_chan]:
+        for c in [x_chan, y_chan, z_chan, integrity_chan]:
             c.frequency = header_info["frequency"]
 
 
-        channels = [x_chan,y_chan,z_chan]
+        channels = [x_chan, y_chan, z_chan, integrity_chan]
         header = header_info
 
-    elif (source_type == "GT3X+_CSV_ZIP"):
-
-        filename = source.split("/")[-1].replace(".zip", ".csv")
-        archive = zipfile.ZipFile(source)
-        file_handle = archive.open(filename)
-
-        first_lines = []
-        for i in range(0,10):
-            s = file_handle.readline().strip().decode("utf-8")
-            #print(s)
-            first_lines.append(s)
-
-        #print(first_lines)
-
-        header_info = parse_header(first_lines, "GT3X+_CSV", "")
-
-        time = header_info["start_datetime"]
-        epoch_length = header_info["epoch_length"]
-
-        file_handle = archive.open(filename)
-        timestamps = np.genfromtxt(file_handle, delimiter=',', converters={0:convert_actigraph_timestamp}, skip_header=11, usecols=(0))
-
-
-        file_handle = archive.open(filename)
-        x,y,z = np.genfromtxt(file_handle, delimiter=',', skip_header=11, usecols=(1,2,3), unpack=True)
-
-
-
-        x_chan = Channel("X")
-        y_chan = Channel("Y")
-        z_chan = Channel("Z")
-
-        x_chan.set_contents(x, timestamps)
-        y_chan.set_contents(y, timestamps)
-        z_chan.set_contents(z, timestamps)
-
-        channels = [x_chan,y_chan,z_chan]
-        header = header_info
-
-    elif (source_type == "CSV"):
+    elif source_type == "CSV":
 
         f = open(source, 'r')
         s = f.readline().strip()
@@ -807,8 +813,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             c.set_contents(np.array(data[:, col], dtype=np.float64), timestamps)
             channels.append(c)
 
-
-    elif (source_type.startswith("Axivity")):
+    elif source_type.startswith("Axivity"):
         # if source file is zipped, unzip to read
         if source_type.endswith("_ZIP"):
             archive = zipfile.ZipFile(source, "r")
@@ -824,7 +829,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
-        channel_validity = Channel("Validity")
+        channel_integrity = Channel("Integrity")
 
         raw_bytes = handle.read()
         fh = io.BytesIO(raw_bytes)
@@ -845,12 +850,21 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         axivity_x = np.empty(estimated_num_samples)
         axivity_y = np.empty(estimated_num_samples)
         axivity_z = np.empty(estimated_num_samples)
-        axivity_light = np.empty(estimated_num_pages)
-        axivity_temperature = np.empty(estimated_num_pages)
-        axivity_battery = np.empty(estimated_num_pages)
         axivity_timestamps = np.empty(estimated_num_pages, dtype=type(start))
         axivity_indices = np.empty(estimated_num_pages)
-        axivity_validity = np.empty(estimated_num_pages)
+        axivity_integrity = np.zeros(estimated_num_samples)
+
+        # Check if data is to be separated into sample-level and page-level data:
+        if compress is True:
+            axivity_light = np.empty(estimated_num_pages)
+            axivity_temperature = np.empty(estimated_num_pages)
+            axivity_battery = np.empty(estimated_num_pages)
+
+        # if not, then all data is expressed at sample level (i.e. uncompressed)
+        else:
+            axivity_light = np.empty(estimated_num_samples)
+            axivity_temperature = np.empty(estimated_num_samples)
+            axivity_battery = np.empty(estimated_num_samples)
 
         file_header = OrderedDict()
         file_header = parse_axivity_header(source)
@@ -882,12 +896,12 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                 elif header == b'AX':
 
                     packet = axivity_read(fh, 510)
-                    
+
                     packetLength, deviceId, sessionId, sequenceId, sampleTimeData, light, temperature, events, battery, sampleRate, numAxesBPS, timestampOffset, sampleCount = unpack('HHIIIHHcBBBhH', packet[0:28])
-                    
+
                     # sector is equal to packet plus sector header
                     sector = b'AX' + packet
-                    
+
                     #calculate the checksum of the data sector
                     sector_checksum = checksum(sector)
 
@@ -944,29 +958,32 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
                     axivity_indices[num_pages] = num_samples
                     axivity_timestamps[num_pages] = final_timestamp
-                    
-                    # check for data integrity:
-                    if sector_checksum == 0 and sessionId == file_session_id:    
+
+                    '''# check for data integrity:
+                    if sector_checksum == 0 and sessionId == file_session_id:
                         # if check passed then set 'validity' to '0' and extract the data
                         axivity_validity[num_pages] = 0
                     # if integrity check fails on checksum, set 'validity' to '1'
-                    elif sector_checksum != 0:    
+                    elif sector_checksum != 0:
                         axivity_validity[num_pages] = 1
-                    # if integrity check fails on session id matching, set 'validity value' to '2'                   
+                    # if integrity check fails on session id matching, set 'validity value' to '2'
                     elif sessionId != file_session_id:
-                        axivity_validity[num_pages] = 2
-                    
+                        axivity_validity[num_pages] = 2'''
+
                     # convert the light and temperature values to lux and degrees C values
                     light_converted = convert_axivity_light(light)
                     temp_converted = convert_axivity_temp(temperature)
-                    axivity_light[num_pages] = light_converted
-                    axivity_temperature[num_pages] = temp_converted
-                    axivity_battery[num_pages] = battery
+
+                    if compress is True:
+                        # save one value of light, battery and temperature per page
+                        axivity_light[num_pages] = light_converted
+                        axivity_temperature[num_pages] = temp_converted
+                        axivity_battery[num_pages] = battery
 
                     for sample in range(sampleCount):
-                        # index for the bytes per sample, depending on bytesPerSample(bps)                        
+                        # index for the bytes per sample, depending on bytesPerSample(bps)
                         i = 28 + (sample * bps)
-                    
+
                         if bps == 4:
                             temp = unpack('I', packet[i:(i+4)])[0]
                             temp2 = (6 - (temp >> 30))
@@ -982,8 +999,14 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                         axivity_y[num_samples] = y
                         axivity_z[num_samples] = z
 
+                        if compress is not True:
+                            # save one value of light, battery and temperature
+                            axivity_light[num_samples] = light_converted
+                            axivity_temperature[num_samples] = temp_converted
+                            axivity_battery[num_samples] = battery
+
                         num_samples += 1
-                                    
+
                     num_pages += 1
 
                 else:
@@ -1000,52 +1023,67 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         # We created oversized arrays at the start, to make sure we could fit all the data in
         # Now we know how much data was there, we can shrink the arrays to size
-
-        axivity_temperature.resize(num_pages)
-        axivity_light.resize(num_pages)
-        axivity_battery.resize(num_pages)
-        axivity_timestamps.resize(num_pages)
-        axivity_indices.resize(num_pages)
-        axivity_validity.resize(num_pages)
-        axivity_indices = axivity_indices.astype(int)
-
-        # Map the page-level timestamps to the temperature, battery and light data
-        channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
-        channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
-        channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
-        channel_validity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
-
         axivity_x.resize(num_samples)
         axivity_y.resize(num_samples)
         axivity_z.resize(num_samples)
+        axivity_timestamps.resize(num_pages)
+        axivity_indices.resize(num_pages)
+        axivity_integrity.resize(num_samples)
+
+        axivity_indices = axivity_indices.astype(int)
+
         # Map the page-level timestamps to the acceleration data "sparsely"
         channel_x.set_contents(axivity_x, axivity_timestamps, timestamp_policy="sparse")
         channel_y.set_contents(axivity_y, axivity_timestamps, timestamp_policy="sparse")
         channel_z.set_contents(axivity_z, axivity_timestamps, timestamp_policy="sparse")
+        channel_integrity.set_contents(axivity_integrity, axivity_timestamps, timestamp_policy="sparse")
+        channel_integrity.binary_data = True
 
-        #Approximate the frequency in hertz, based on the difference between the first and last timestamp
-        approximate_frequency = timedelta(seconds=1) / ((axivity_timestamps[-1] - axivity_timestamps[0]) / num_samples)
+        if compress is True:
+            axivity_temperature.resize(num_pages)
+            axivity_light.resize(num_pages)
+            axivity_battery.resize(num_pages)
+
+            # Map the page-level timestamps to the temperature, battery and light data
+            channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
+            channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
+            channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
+
+        else:
+            axivity_temperature.resize(num_samples)
+            axivity_light.resize(num_samples)
+            axivity_battery.resize(num_samples)
+
+            # Map the page-level timestamps to the temperature, battery and light data
+            channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="sparse")
+            channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="sparse")
+            channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="sparse")
+
+        # Approximate the frequency in hertz, based on the difference between the first and last timestamp
+        approximate_frequency = timedelta(seconds=1) / (
+                    (axivity_timestamps[-1] - axivity_timestamps[0]) / num_samples)
         file_header["approximate_frequency"] = approximate_frequency
         file_header["num_samples"] = num_samples
         file_header["num_pages"] = num_pages
 
-        for c in [channel_x, channel_y, channel_z]:
+        for c in [channel_x, channel_y, channel_z, channel_integrity]:
             c.indices = axivity_indices
             c.frequency = file_header["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_validity]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light,
+                    channel_integrity]
         header = file_header
         try:
             handle.close()
         except:
             pass
 
-
-    elif (source_type == "GeneActiv"):
+    elif source_type == "GeneActiv":
 
         channel_x = Channel("X")
         channel_y = Channel("Y")
         channel_z = Channel("Z")
+        channel_integrity = Channel("Integrity")
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
@@ -1069,12 +1107,21 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         x_values = np.empty(int(num * num_pages))
         y_values = np.empty(int(num * num_pages ))
         z_values = np.empty(int(num * num_pages))
-        light_values = np.empty(int(num_pages))
-        temperature_values = np.empty(int(num_pages))
-        battery_values = np.empty(int(num_pages))
+        integrity = np.zeros(int(num * num_pages))
         ga_indices = np.empty(int(num_pages))
 
-        # we want a timestamp for each page to assign to the light, temperature and battery data
+        # Check if data is to be separated into sample-level and page-level data:
+        if compress is True:
+            light_values = np.empty(int(num_pages))
+            temperature_values = np.empty(int(num_pages))
+            battery_values = np.empty(int(num_pages))
+
+        else:
+            light_values = np.empty(int(num * num_pages))
+            temperature_values = np.empty(int(num * num_pages))
+            battery_values = np.empty(int(num * num_pages))
+
+        # we want a timestamp for each page
         page_timestamps = np.empty(int(num_pages), dtype=type(header_info["start_datetime_python"]))
 
         # For each page
@@ -1085,26 +1132,47 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
                 # If the block data is not corrupt...
                 try:
+                    page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:]) * 1000)
+                    page_timestamps[page] = page_time
+
+                    # read temperature, for page, in degrees C
+                    temperature = lines[5].split(":")[1]
+                    # read battery voltage for page
+                    battery = lines[6].split(":")[1]
+
+                    if compress is True:
+                        # record temperature and battery at page level
+                        temperature_values[page] = temperature
+                        battery_values[page] = battery
+
                     # For each 12 byte measurement in page (300 of them)
                     for j in range(num):
-                        # time = page_time + (j * header_info["epoch"])
-                         
+
                         block = data.read(12)
                         # Each of x,y,z are given by a 3-digit hexadecimal number
                         x = int(block[0:3], 16)
                         y = int(block[3:6], 16)
                         z = int(block[6:9], 16)
         
-                        # 'Light' is included in the last 3-digit hexadecimal number, we will only preserve the first light data
-                        # point of each page to include in the page-level data.
-                        if j == 0:
-                            final_block = int(block[9:12], 16)
-                            # Convert to 12 bit binary number
-                            final_binary = "{0:b}".format(final_block).zfill(12)
-                            # light is only the first 10 bits, so drop last 2 bits.
-                            light_binary = final_binary[:-2]
-                            # Then convert to an integer:
-                            light = int(light_binary, 2)
+                        # 'Light' is included in the last 3-digit hexadecimal number
+                        final_block = int(block[9:12], 16)
+                        # Convert to 12 bit binary number
+                        final_binary = "{0:b}".format(final_block).zfill(12)
+                        # light is only the first 10 bits, so drop last 2 bits.
+                        light_binary = final_binary[:-2]
+                        # Then convert to an integer:
+                        light = int(light_binary, 2)
+
+                        if compress is True and j == 0:
+                            # record the first observation of light at page level
+                            light_values[page] = light
+
+                        elif compress is True and j != 0:
+                            pass
+
+                        else:
+                            # record light at sample level
+                            light_values[obs_num] = light
       
                         x, y, z = twos_comp(x, 12), twos_comp(y, 12), twos_comp(z, 12)
                         x_values[obs_num] = x
@@ -1112,21 +1180,9 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                         z_values[obs_num] = z
                         obs_num += 1
 
-                    page_time = datetime.strptime(lines[3][10:29], "%Y-%m-%d %H:%M:%S") + timedelta(microseconds=int(lines[3][30:]) * 1000)
-                    page_timestamps[page] = page_time
                     ga_indices[page] = obs_num
 
-                    # read temperature, for page, in degrees C
-                    temperature = lines[5].split(":")[1]
-                    # read battery voltage for page
-                    battery = lines[6].split(":")[1]
-
                     excess = data.read(2)
-                    light_values[page] = light
-
-                    # record temperature and battery at page level
-                    temperature_values[page] = temperature
-                    battery_values[page] = battery
 
                     page += 1
                     
@@ -1143,10 +1199,18 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         safe_x = np.resize(x_values, obs_num)
         safe_y = np.resize(y_values, obs_num)
         safe_z = np.resize(z_values, obs_num)
-        safe_light = np.resize(light_values, page)
-        safe_temperature = np.resize(temperature_values, page)
-        safe_battery = np.resize(battery_values, page)
+        safe_integrity = np.resize(integrity, obs_num)
         safe_indices = safe_indices.astype(int)
+
+        if compress is True:
+            safe_light = np.resize(light_values, page)
+            safe_temperature = np.resize(temperature_values, page)
+            safe_battery = np.resize(battery_values, page)
+
+        else:
+            safe_light = np.resize(light_values, obs_num)
+            safe_temperature = np.resize(temperature_values, obs_num)
+            safe_battery = np.resize(battery_values, obs_num)
 
         # calibrate the x, y, z and light data using the monitor's given calibration parameters.
         safe_x = np.array([(x * 100.0 - header_info["x_offset"]) / header_info["x_gain"] for x in safe_x])
@@ -1158,20 +1222,29 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         channel_x.set_contents(safe_x, safe_timestamps, timestamp_policy="sparse")
         channel_y.set_contents(safe_y, safe_timestamps, timestamp_policy="sparse")
         channel_z.set_contents(safe_z, safe_timestamps, timestamp_policy="sparse")
+        channel_integrity.set_contents(safe_integrity, safe_timestamps, timestamp_policy="sparse")
+        channel_integrity.binary_data = True
 
-        # Map the page-level timestamps to the temperature, battery and light data "normally"
-        channel_temperature.set_contents(safe_temperature, safe_timestamps, timestamp_policy="normal")
-        channel_battery.set_contents(safe_battery, safe_timestamps, timestamp_policy="normal")
-        channel_light.set_contents(safe_light, safe_timestamps, timestamp_policy="normal")
+        if compress is True:
+            # Map the page-level timestamps to the temperature, battery and light data "normally"
+            channel_temperature.set_contents(safe_temperature, safe_timestamps, timestamp_policy="normal")
+            channel_battery.set_contents(safe_battery, safe_timestamps, timestamp_policy="normal")
+            channel_light.set_contents(safe_light, safe_timestamps, timestamp_policy="normal")
 
-        for c in [channel_x, channel_y, channel_z]:
+        else:
+            # Map the page-level timestamps to the temperature, battery and light data "sparsely"
+            channel_temperature.set_contents(safe_temperature, safe_timestamps, timestamp_policy="sparse")
+            channel_battery.set_contents(safe_battery, safe_timestamps, timestamp_policy="sparse")
+            channel_light.set_contents(safe_light, safe_timestamps, timestamp_policy="sparse")
+
+        for c in [channel_x, channel_y, channel_z, channel_integrity]:
             c.indices = safe_indices
             c.frequency = header_info["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_integrity]
         header = header_info
 
-    elif (source_type == "XLO"):
+    elif source_type == "XLO":
 
         # First 15 lines contain generic header info
         first_lines = []
@@ -1215,7 +1288,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         header = header_info
 
-    elif (source_type == "HDF5"):
+    elif source_type == "HDF5":
 
         f = h5py.File(source, hdf5_mode)
 
@@ -1239,7 +1312,6 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                 if len(header.keys()) == 0:
                     header = dictionary_from_attributes(raw_group)
                     header["hdf5_file"] = f
-
 
     # Check for an anomalies csv file corresponding to this data file, read in the file to a list of dictionaries if it exists
     anomalies = []
@@ -1369,15 +1441,16 @@ def cwa_parse_metadata(data):
         "_s": "study_code",
         "_i": "investigator",
         "_x": "exercise_code",
-        "_v": "volunteer_number",
+#        "_v": "volunteer_number",
         "_p": "body_location",
         "_so": "setup_operator",
-        "_n": "notes",
+        "_n": "study_notes",
         "_b": "start_time",
         "_e": "end_time",
-        "_ro": "recovery_operator",
-        "_r": "retrieval_time",
-        "_co": "comments",
+#        "_ro": "recovery_operator",
+#        "_r": "retrieval_time",
+        "_sn": "subject_notes",
+#        "_co": "comments",
         "_sc": "subject_code",
         "_se": "sex",
         "_h": "height",

@@ -1,3 +1,12 @@
+# pampro - physical activity monitor processing
+# Copyright (C) 2019  MRC Epidemiology Unit, University of Cambridge
+#   
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+#   
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 from datetime import datetime, date, time, timedelta
 import copy
@@ -267,7 +276,10 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
             for i in range(last_good_index + 1,recovery_point, 1):
                 channel.timestamps[i] = expected_timestamps[i]
             for i in range((last_good_index + 1)*dtr, recovery_point*dtr, 1):    
-                channel.data[i] = missing_value
+                if channel.name == "Integrity":
+                    channel.data[i] = 1
+                else:    
+                    channel.data[i] = missing_value
             
     
     elif anomaly_def["anomaly_type"] == "B":
@@ -293,12 +305,16 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
         
         #insert missing_value into each channel to align with these new timestamps, and update timestamp arrays
         missing_value_array = np.tile(A=missing_value, reps=2*dtr)
+        integrity_array = np.tile(A=1, reps=2*dtr)
         for channel in channels:
             # "B" anomalies can be the result of pauses in recording while the device is charging, so retain battery level prior to and after anomaly
             if channel.name == "Battery":
                 anomaly_def["Battery_before_anomaly"] = channel.data[last_good_index]
                 anomaly_def["Battery_after_anomaly"] = channel.data[last_good_index+2]
-            channel.data = np.insert(channel.data, (last_good_index+1)*dtr, missing_value_array)
+            if channel.name == "Integrity":
+                channel.data = np.insert(channel.data, (last_good_index+1)*dtr, integrity_array)
+            else:    
+                channel.data = np.insert(channel.data, (last_good_index+1)*dtr, missing_value_array)
             channel.timestamps = timestamps
             
             
@@ -313,7 +329,10 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
                 channel.timestamps[i] = expected_timestamps[i]
             
             for i in range((last_good_index + 1)*dtr, (end_point+1)*dtr, 1):    
-                channel.data[i] = missing_value
+                if channel.name == "Integrity":
+                    channel.data[i] = 1
+                else:
+                    channel.data[i] = missing_value
         
         
         # if recovery point is not the end of the file
@@ -333,7 +352,10 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
         expected_timestamps = expected_timestamps[:last_good_index]
 
     for channel in channels:
-        channel.missing_value = missing_value
+        if channel.name == "Integrity":
+            pass
+        else:
+            channel.missing_value = missing_value
             
     return channels, expected_timestamps, anomaly_def  
     
@@ -361,4 +383,4 @@ def diagnose_axes(x, y, z, window_size=timedelta(minutes=10), noise_cutoff_mg=13
         axes_dict["{}_min".format(chan.name.replace("_mean",""))] = min(chan.data)
             
     return axes_dict
-            
+
