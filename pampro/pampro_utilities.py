@@ -257,6 +257,6 @@ def define_statistics(stats_list, intensities_list, angles_list):
     if 'battery' in stats_list:
         stats["Battery"] = [("generic", ["mean"])]
     if 'integrity' in stats_list:
-        stats["Integrity"] = [("generic", ["mean"])]
+        stats["Integrity"] = [("generic", ["sum"])]
 
     return stats
