@@ -110,8 +110,8 @@ def batch_process_wrapper(analysis_function, jobs_df, settings, job_num=1, num_j
 
     task = analysis_function.__name__
 
-    submission_id = settings["submission_id"].item()
-    logs_folder = settings["logs_folder"].item()
+    submission_id = settings.get("submission_id")[0]
+    logs_folder = settings.get("logs_folder")[0]
     # archive = os.path.join(logs_folder, "archive")
     output_string = "_completed_"
     error_string = "_unsuccessful_"

@@ -265,7 +265,7 @@ class Time_Series(object):
         except:
             print("Encountered an error whilst customising the appearance of charts. This may be because you are running an outdated version of matplotlib.")
 
-        fig = plt.figure(figsize=(width,height), frameon=False)
+        fig = plt.figure(figsize=(width,height))
         fig.patch.set_facecolor('#FFFFFF')
 
         if time_period == False:
@@ -293,7 +293,7 @@ class Time_Series(object):
         if file_target==False:
             return fig
         else:
-            plt.savefig(file_target, dpi=300, frameon=False, facecolor='#FFFFFF')
+            plt.savefig(file_target, dpi=300, facecolor='#FFFFFF')
             plt.close("all")
     
     
@@ -320,7 +320,7 @@ class Time_Series(object):
         except:
             print("Encountered an error whilst customising the appearance of charts. This may be because you are running an outdated version of matplotlib.")
 
-        fig = plt.figure(figsize=(width,height), frameon=False)
+        fig = plt.figure(figsize=(width,height))
         fig.patch.set_facecolor('#FFFFFF')
 
         if time_period == False:
@@ -354,7 +354,7 @@ class Time_Series(object):
         if file_target==False:
             return fig
         else:
-            plt.savefig(file_target, dpi=300, frameon=False, facecolor='#FFFFFF')
+            plt.savefig(file_target, dpi=300, facecolor='#FFFFFF')
             plt.close("all")
 
 
@@ -381,7 +381,7 @@ class Time_Series(object):
         except:
             print("Encountered an error whilst customising the appearance of charts. This may be because you are running an outdated version of matplotlib.")
 
-        fig = plt.figure(figsize=(width,height), frameon=False)
+        fig = plt.figure(figsize=(width,height))
         fig.patch.set_facecolor('#FFFFFF')
 
         axes = [fig.add_subplot(len(channel_combinations), 1, 1+index) for index in range(len(channel_combinations))]
@@ -407,7 +407,7 @@ class Time_Series(object):
 
         fig.tight_layout()
 
-        plt.savefig(file_target, dpi=300, frameon=False, facecolor='#FFFFFF')
+        plt.savefig(file_target, dpi=300, facecolor='#FFFFFF')
         plt.close("all")
 
 
