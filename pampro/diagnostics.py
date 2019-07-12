@@ -383,4 +383,41 @@ def diagnose_axes(x, y, z, window_size=timedelta(minutes=10), noise_cutoff_mg=13
         axes_dict["{}_min".format(chan.name.replace("_mean",""))] = min(chan.data)
             
     return axes_dict
+    
+    
+def find_stuck_bouts(x, y, z, dynamic_range):
+    """Take channels of x, y, z data and a tuple of dynamic range=(low,high)
+    return: list of bouts where every axis is stuck exceeding either maximum or minimum"""
+    
+    # create a list of bouts for each axis where the value is outside the dynamic range
+    x_low = x.bouts(-20, dynamic_range[0])
+    x_high = x.bouts(dynamic_range[1], 20)
+    x_list = bout_list_union(x_low, x_high)
+    
+    y_low = y.bouts(-20, dynamic_range[0])
+    y_high = y.bouts(dynamic_range[1], 20)
+    y_list = bout_list_union(y_low, y_high)
+    
+    z_low = z.bouts(-20, dynamic_range[0])
+    z_high = z.bouts(dynamic_range[1], 20)
+    z_list = bout_list_union(z_low, z_high)
+    
+    # the axis is stuck if the bouts of all three axes have any overlap
+    xy_list = bout_list_intersection(x_list, y_list)
+    xyz_list = bout_list_intersection(xy_list, z_list)
+
+    return xyz_list
+    
+
+def diagnose_fix_axes_stuck(x, y, z, integrity, dynamic_range, acc_missing=-111, integrity_missing=1):
+    """Takes the x,y,z and integrity channels, finds the stuck bouts and fills the channels with "missing" values"""
+    
+    missing_list = [acc_missing, acc_missing, acc_missing, integrity_missing]
+    
+    stuck_bouts = find_stuck_bouts(x, y, z, dynamic_range)
+    
+    for channel, fill_value in zip([x, y, z, integrity], missing_list):
+        channel.fill_windows(stuck_bouts, fill_value)
+        
+    return stuck_bouts
 
