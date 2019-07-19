@@ -500,8 +500,8 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         sampling_frequency = A[35]
 
         # 0 = 2g, 1 = 4g (therefore double the raw values), 2 = 8g (therefore quadruple the raw values)
-        dynamic_range = A[38]
-        dynamic_multiplier = 2 ** dynamic_range
+        dynamic_range_code = A[38]
+        dynamic_multiplier = 2 ** dynamic_range_code
 
         start_python = datetime.strptime(start, "%d/%m/%Y %H:%M:%S")
         end_python = datetime.strptime(end, "%d/%m/%Y %H:%M:%S")
@@ -621,7 +621,8 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
             c.sparsely_timestamped = False
             c.frequency = sampling_frequency
 
-        header["dynamic_range"] = dynamic_range
+        header["frequency"] = sampling_frequency
+        header["dynamic_range_code"] = dynamic_range_code
         
         channels = [x_channel, y_channel, z_channel, integrity_channel]
 
@@ -1732,7 +1733,7 @@ def fast_load(source, source_type):
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
-        channel_validity = Channel("Validity")
+        channel_integrity = Channel("Integrity")
 
         raw_bytes = handle.read()
         fh = io.BytesIO(raw_bytes)
@@ -1755,7 +1756,7 @@ def fast_load(source, source_type):
         axivity_battery = np.empty(estimated_num_pages)
         axivity_timestamps = np.empty(estimated_num_pages, dtype=type(start))
         axivity_indices = np.empty(estimated_num_pages)
-        axivity_validity = np.empty(estimated_num_pages)
+        axivity_integrity = np.empty(estimated_num_pages)
 
         file_header = OrderedDict()
         file_header = parse_axivity_header(source)
@@ -1913,7 +1914,7 @@ def fast_load(source, source_type):
         axivity_timestamps.resize(num_pages)
         axivity_indices.resize(num_pages)
         axivity_indices = axivity_indices.astype(int)
-        axivity_validity.resize(num_pages)
+        axivity_integrity.resize(num_pages)
 
         axivity_x.resize(num_pages)
         axivity_y.resize(num_pages)
@@ -1926,15 +1927,16 @@ def fast_load(source, source_type):
         channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
         channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
         channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
-        channel_validity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
+        channel_integrity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
+        channel_integrity.binary_data = True
 
         file_header["num_pages"] = num_pages
 
-        for c in [channel_x, channel_y, channel_z]:
+        for c in [channel_x, channel_y, channel_z, channel_integrity]:
             c.indices = axivity_indices
             c.frequency = file_header["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_validity]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_integrity]
         header = file_header
         try:
             handle.close()
@@ -1947,6 +1949,7 @@ def fast_load(source, source_type):
         channel_x = Channel("X")
         channel_y = Channel("Y")
         channel_z = Channel("Z")
+        channel_integrity = Channel("Integrity")
         channel_light = Channel("Light")
         channel_temperature = Channel("Temperature")
         channel_battery = Channel("Battery")
@@ -1969,6 +1972,7 @@ def fast_load(source, source_type):
         x_values = np.empty(int(num_pages))
         y_values = np.empty(int(num_pages))
         z_values = np.empty(int(num_pages))
+        integrity = np.zeros(int(num_pages))
         light_values = np.empty(int(num_pages))
         temperature_values = np.empty(int(num_pages))
         battery_values = np.empty(int(num_pages))
@@ -2033,6 +2037,7 @@ def fast_load(source, source_type):
         # in cases where the number of pages in incorrect, trim page-timestamps and ga_indices arrays, 
         # using 'page' which is a counter of the number of pages
         safe_timestamps = np.resize(page_timestamps, page)  
+        safe_integrity = np.resize(integrity, page)
         safe_indices = np.resize(ga_indices, page)
 
         # calibrate the x, y, z and light data using the monitor's given calibration parameters.
@@ -2050,12 +2055,14 @@ def fast_load(source, source_type):
         channel_temperature.set_contents(temperature_values, safe_timestamps, timestamp_policy="normal")
         channel_battery.set_contents(battery_values, safe_timestamps, timestamp_policy="normal")
         channel_light.set_contents(light_values, safe_timestamps, timestamp_policy="normal")
+        channel_integrity.set_contents(safe_integrity, safe_timestamps, timestamp_policy="normal")
+        channel_integrity.binary_data = True
 
-        for c in [channel_x, channel_y, channel_z]:
+        for c in [channel_x, channel_y, channel_z, channel_integrity]:
             c.indices = safe_indices
             c.frequency = header_info["frequency"]
 
-        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light]
+        channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light, channel_integrity]
         header = header_info
     
     # channels is a list of Channel objects, set above according to the file format

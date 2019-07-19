@@ -421,3 +421,33 @@ def diagnose_fix_axes_stuck(x, y, z, integrity, dynamic_range, acc_missing=-111,
         
     return stuck_bouts
 
+
+def find_dynamic_range(header, monitor, sensitivity_dict={"Axivity":0.5, "GeneActiv":0.5}):
+    """Function to use the header information, monitor type and sensitivity values per monitor type to calculate a diagnostic dynamic range
+    return: dynamic range tuple (low, high)"""
+    
+    if monitor in sensitivity_dict.keys():
+        sensitivity = sensitivity_dict[monitor]
+    else:
+        sensitivity = 0
+                       
+    if monitor == "Axivity":
+        val = int(header["sample_range"]) - sensitivity
+        dynamic_range = (0-val, val)
+        
+    elif monitor == "GeneActiv":
+        val = header["accelerometer_range"].split(" to ")
+        dynamic_range = ((int(val[0]) + sensitivity), (int(val[1]) - sensitivity))        
+        
+    elif monitor == "activPAL":
+        val = int(header["resolution"]) - sensitivity
+        dynamic_range = (0-val, val)
+        
+    elif monitor == "GT3X+": 
+        dynamic_range = (-6 + sensitivity, 6 - sensitivity)
+                       
+    else:
+        # monitor type not supported, use a default set of values
+        dynamic_range = (-8,8)               
+    
+    return dynamic_range
