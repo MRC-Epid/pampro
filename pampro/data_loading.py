@@ -1852,18 +1852,16 @@ def fast_load(source, source_type):
                     axivity_indices[num_pages] = num_pages
                     axivity_timestamps[num_pages] = final_timestamp
 
-                    # check for data integrity:
-                    if sector_checksum == 0 and sessionId == file_session_id:    
-                        # if check passed then set 'validity' to '0'
+                    '''# check for data integrity:
+                    if sector_checksum == 0 and sessionId == file_session_id:
+                        # if check passed then set 'validity' to '0' and extract the data
                         axivity_validity[num_pages] = 0
-                    
+                    # if integrity check fails on checksum, set 'validity' to '1'
                     elif sector_checksum != 0:
-                        # if integrity check fails on checksum, give validity value of '1'
                         axivity_validity[num_pages] = 1
-                    
+                    # if integrity check fails on session id matching, set 'validity value' to '2'
                     elif sessionId != file_session_id:
-                        # if integrity check fails on session ID matching, give validity value of '2'
-                        axivity_validity[num_pages] = 2
+                        axivity_validity[num_pages] = 2'''
                         
                         
                     # convert the light and temperature values to lux and degrees C values
@@ -1927,7 +1925,7 @@ def fast_load(source, source_type):
         channel_temperature.set_contents(axivity_temperature, axivity_timestamps, timestamp_policy="normal")
         channel_battery.set_contents(axivity_battery, axivity_timestamps, timestamp_policy="normal")
         channel_light.set_contents(axivity_light, axivity_timestamps, timestamp_policy="normal")
-        channel_integrity.set_contents(axivity_validity, axivity_timestamps, timestamp_policy="normal")
+        channel_integrity.set_contents(axivity_integrity, axivity_timestamps, timestamp_policy="normal")
         channel_integrity.binary_data = True
 
         file_header["num_pages"] = num_pages
