@@ -438,14 +438,19 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
     elif source_type == "activPAL_CSV":
 
-        ap_timestamp, ap_x, ap_y, ap_z = np.loadtxt(source, delimiter=',', unpack=True, skiprows=5,
+        ap_timestamp, ap_x, ap_y, ap_z = np.loadtxt(source, delimiter=',', unpack=True, skiprows=5, 
                                                     dtype={'names': ('ap_timestamp', 'ap_x', 'ap_y', 'ap_z'),
                                                            'formats': ('S16', 'f8', 'f8', 'f8')})
-        # print("A")
+        
+        #ap_timestamp, ap_x, ap_y, ap_z = np.genfromtxt(source, delimiter=',',unpack=True, skip_header=5, dtype=str)
+        
+        
         dt = datetime.strptime("30-Dec-1899", "%d-%b-%Y")
 
         ap_timestamps = []
         for val in ap_timestamp:
+        
+            val = val.decode()
 
             test = val.split(".")
 
@@ -457,9 +462,9 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         ap_timestamps = np.array(ap_timestamps)
         # print("B")
-        x = Channel("AP_X")
-        y = Channel("AP_Y")
-        z = Channel("AP_Z")
+        x = Channel("X")
+        y = Channel("Y")
+        z = Channel("Z")
 
         ap_x = (ap_x - 128.0) / 64.0
         ap_y = (ap_y - 128.0) / 64.0
@@ -529,18 +534,18 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         last_a, last_b, last_c = 0, 0, 0
 
         while n < num_records and data.tell() < filesize:
-
+        
             try:
                 data_cache = data.read(3)
                 a, b, c = unpack('ccc', data_cache)
                 a, b, c = ord(a), ord(b), ord(c)
-
+    
                 # print(a,b,c)
-
+    
                 # activPAL writes TAIL but these values could legitimately turn up
                 if a == 116 and b == 97 and c == 105:
                     # if a,b,c spell TAI
-
+    
                     d = ord(unpack('c', data.read(1))[0])
                     # and if d == T, so TAIL just came up
                     if d == 108:
@@ -561,7 +566,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                         y[n] = e
                         z[n] = f
                         n += 1
-
+    
                 else:
                     if a == 0 and b == 0:
                         # repeat last abc C-1 times
@@ -574,10 +579,10 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                         y[n] = b
                         z[n] = c
                         n += 1
-
+    
                 last_a, last_b, last_c = a, b, c
-
-
+    
+    
             except:
                 """
                 print("Exception tell", data.tell())
