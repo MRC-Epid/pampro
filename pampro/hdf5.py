@@ -287,7 +287,6 @@ def interpolate_offsets(offsets, data_length):
 
     # Essentially equates to the number of observations per page in a raw file
     data_to_offset_ratio = math.ceil(data_length / len(offsets))
-    print(data_to_offset_ratio)
 
     # Append a final offset value so the iteration below fills the final values
     offsets = np.concatenate((offsets, [offsets[-1] + (offsets[-1]-offsets[-2])]))
@@ -330,9 +329,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         group = f.create_group(group_name)
 
         first_channel = ts[channels[0]]
-        timestamps = first_channel.timestamps
         data_length = len(first_channel.data)
-        timestamp_length = len(timestamps)
 
         # set attributes for the first group only
         if file_header is not None:
@@ -348,21 +345,11 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
         group.attrs["start"] = first_channel.time_period[0].strftime("%d/%m/%Y %H:%M:%S")
 
         # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
-        start, offsets = timestamps_to_offsets(timestamps)
-
-        # If the timestamps are sparse, expand them to 1 per observation
-        if timestamp_length < data_length:
-            offsets = interpolate_offsets(offsets, data_length)
-
-        # When we have page-level timestamps from a file, a timestamp points at the first observation in the page
-        # This leaves some data at the end of a file without timestamps
-        # So the data_loading function infers a final timestamp that points at the last observation
-        # This means there is 1 extra timestamp than the page level data, which we want to ignore here
-        if timestamp_length == data_length+1:
-            offsets = offsets[:-1]
+        if first_channel.timestamp_policy != "offset":
+            channel.set_timestamp_policy("offset")
 
         offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
-        offsets_dset[...] = offsets
+        offsets_dset[...] = first_channel.timestamps
 
         # Each channel's data array becomes a HDF5 dataset inside the group
         for channel_name in channels:

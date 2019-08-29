@@ -64,7 +64,7 @@ class Channel(object):
 
     def set_timestamp_policy(self, new_timestamp_policy):
         """
-        Not yet implemented.
+        Only currently implemented for converting normal -> offset and sparse -> offset
         """
 
         if self.timestamp_policy == new_timestamp_policy:
@@ -78,7 +78,23 @@ class Channel(object):
                     print("sparse -> normal not yet implemented.")
 
                 elif new_timestamp_policy == "offset":
-                    print("sparse -> offset not yet implemented.")
+                    self.start = self.timestamps[0]
+                    old_timestamps = self.timestamps
+                    
+                    # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
+                    start, offsets = timestamps_to_offsets(old_timestamps)
+                    
+                    # If the timestamps are sparse, expand them to 1 per observation
+                    offsets = interpolate_offsets(offsets, len(self.data))
+                    
+                    # When we have page-level timestamps from a file, a timestamp points at the first observation in the page
+                    # This leaves some data at the end of a file without timestamps
+                    # So the data_loading function infers a final timestamp that points at the last observation
+                    # This means there is 1 extra timestamp than the page level data, which we want to ignore here
+                    if len(old_timestamps) == len(self.data)+1:
+                        offsets = offsets[:-1]
+                    
+                    self.set_contents(self.data, offsets, timestamp_policy="offset")    
 
             elif self.timestamp_policy == "normal":
 
@@ -86,7 +102,20 @@ class Channel(object):
                     print("normal -> sparse not yet implemented.")
 
                 elif new_timestamp_policy == "offset":
-                    print("normal -> offset not yet implemented.")
+                    self.start = self.timestamps[0]
+                    old_timestamps = self.timestamps
+                    
+                    # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
+                    start, offsets = timestamps_to_offsets(old_timestamps)
+                    
+                    # When we have page-level timestamps from a file, a timestamp points at the first observation in the page
+                    # This leaves some data at the end of a file without timestamps
+                    # So the data_loading function infers a final timestamp that points at the last observation
+                    # This means there is 1 extra timestamp than the page level data, which we want to ignore here
+                    
+                    if len(old_timestamps) == len(self.data)+1:
+                        offsets = offsets[:-1]
+                    self.set_contents(self.data, offsets, timestamp_policy="offset")    
 
             elif self.timestamp_policy == "offset":
 
