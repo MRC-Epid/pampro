@@ -344,16 +344,23 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
 
         group.attrs["start"] = first_channel.time_period[0].strftime("%d/%m/%Y %H:%M:%S")
 
-        # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
+        
+
+        offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
+        
+        # check is channel data is already timestamped with offsets, if not convert to offsets
         if first_channel.timestamp_policy != "offset":
+            # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
             start, offsets = timestamps_to_offsets(first_channel.timestamps)
 
             # If the timestamps are sparse, expand them to 1 per observation
             if len(first_channel.timestamps) < data_length:
                 offsets = interpolate_offsets(offsets, data_length)
-
-        offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
-        offsets_dset[...] = first_channel.timestamps
+            
+            offsets_dset[...] = offsets
+        
+        else:
+            offsets_dset[...] = first_channel.timestamps
 
         # Each channel's data array becomes a HDF5 dataset inside the group
         for channel_name in channels:
