@@ -1111,7 +1111,7 @@ def resample_normal_channels(channels, target_freq):
     start = c.timestamps[0]
 
     # Convert timestamps to offsets from the first timestamp
-    start, offsets = hdf5.timestamps_to_offsets(c.timestamps)
+    start, offsets = timestamps_to_offsets(c.timestamps)
 
     # add extra offset to cover final page
     offsets = np.concatenate((offsets, [offsets[-1] + (offsets[-1]-offsets[-2])]))
@@ -1148,10 +1148,10 @@ def resample_sparse_channels(channels, target_freq):
     start = c.timestamps[0]
 
     # Convert timestamps to offsets from the first timestamp
-    start, offsets = hdf5.timestamps_to_offsets(c.timestamps)
+    start, offsets = timestamps_to_offsets(c.timestamps)
     
     # If the timestamps are sparse, expand them to 1 per observation
-    offsets = hdf5.interpolate_offsets(offsets, len(c.data))
+    offsets = interpolate_offsets(offsets, len(c.data))
     
     delta = int((timedelta(seconds=1)/target_freq).total_seconds()*1000)
     new_timestamps = np.arange(0, offsets[-1], delta)
