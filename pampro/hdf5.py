@@ -349,7 +349,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
             start, offsets = timestamps_to_offsets(first_channel.timestamps)
 
             # If the timestamps are sparse, expand them to 1 per observation
-            if timestamp_length < data_length:
+            if len(first_channel.timestamps) < data_length:
                 offsets = interpolate_offsets(offsets, data_length)
 
         offsets_dset = group.create_dataset("timestamps", (data_length,), chunks=True, compression="gzip", shuffle=True, compression_opts=9, dtype="uint32")
