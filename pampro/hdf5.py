@@ -346,7 +346,7 @@ def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])
 
         # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
         if first_channel.timestamp_policy != "offset":
-            start, offsets = timestamps_to_offsets(timestamps)
+            start, offsets = timestamps_to_offsets(first_channel.timestamps)
 
             # If the timestamps are sparse, expand them to 1 per observation
             if timestamp_length < data_length:
