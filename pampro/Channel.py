@@ -68,7 +68,8 @@ class Channel(object):
         """
 
         if self.timestamp_policy == new_timestamp_policy:
-            print("Channel {} is already timestamped according to policy {}".format(self.name, self.timestamp_policy))
+            pass
+            #print("Channel {} is already timestamped according to policy {}".format(self.name, self.timestamp_policy))
 
         else:
 
@@ -91,8 +92,8 @@ class Channel(object):
                     # This leaves some data at the end of a file without timestamps
                     # So the data_loading function infers a final timestamp that points at the last observation
                     # This means there is 1 extra timestamp than the page level data, which we want to ignore here
-                    if len(old_timestamps) == len(self.data)+1:
-                        offsets = offsets[:-1]
+                    #if len(old_timestamps) == len(self.data)+1:
+                    #    offsets = offsets[:-1]
                     
                     self.set_contents(self.data, offsets, timestamp_policy="offset")    
 
@@ -108,13 +109,18 @@ class Channel(object):
                     # Convert timestamps to offsets from the first timestamp - makes storing them easier as ints
                     start, offsets = timestamps_to_offsets(old_timestamps)
                     
+                    
+                    
+                    # add extra offset to cover final page
+                    offsets = np.concatenate((offsets, [offsets[-1] + (offsets[-1]-offsets[-2])]))
+                    
                     # When we have page-level timestamps from a file, a timestamp points at the first observation in the page
                     # This leaves some data at the end of a file without timestamps
                     # So the data_loading function infers a final timestamp that points at the last observation
                     # This means there is 1 extra timestamp than the page level data, which we want to ignore here
                     
-                    if len(old_timestamps) == len(self.data)+1:
-                        offsets = offsets[:-1]
+                    #if len(old_timestamps) == len(self.data)+1:
+                    #    offsets = offsets[:-1]
                     self.set_contents(self.data, offsets, timestamp_policy="offset")    
 
             elif self.timestamp_policy == "offset":
@@ -1097,3 +1103,73 @@ def channel_from_bouts(bouts, time_period, time_resolution, channel_name, skelet
 
     return result
 
+def resample_normal_channels(channels, target_freq):
+    """ Function to resample a list of normally-timestamped data channels which share a timestamps array to a target frequency,
+     and convert to offset timestamps """
+    
+    c = channels[0]
+    start = c.timestamps[0]
+
+    # Convert timestamps to offsets from the first timestamp
+    start, offsets = hdf5.timestamps_to_offsets(c.timestamps)
+
+    # add extra offset to cover final page
+    offsets = np.concatenate((offsets, [offsets[-1] + (offsets[-1]-offsets[-2])]))
+
+    delta = int((timedelta(seconds=1)/target_freq).total_seconds()*1000)
+    new_timestamps = np.arange(0, offsets[-1], delta)
+
+    for channel in channels:
+        data = np.concatenate((channel.data, [(channel.data[-1])]))
+
+        # Yields a function that can be called with a new timestamp value
+        func = interp1d(offsets, data)
+
+        # func is a function, so we just give it new hypothetical offsets
+        new_data = func(new_timestamps)
+
+        # when resampling a binary data channel we want to change any value > 0 to 1, and so preserve its binary nature.
+        if channel.binary_data:
+            indices = np.where(new_data>0)[0]
+            for i in indices:
+                new_data[i] = 1
+        
+        channel.start = start
+        channel.cached_indices = {}
+        channel.set_contents(new_data[:-1], new_timestamps[:-1], timestamp_policy="offset")
+        channel.frequency = target_freq                      
+    
+                              
+def resample_sparse_channels(channels, target_freq):
+    """ Function to resample a list of spoarsley-timestamped data channels which share a timestamps array to a target frequency,
+     and convert to offset timestamps """
+    
+    c = channels[0]
+    start = c.timestamps[0]
+
+    # Convert timestamps to offsets from the first timestamp
+    start, offsets = hdf5.timestamps_to_offsets(c.timestamps)
+    
+    # If the timestamps are sparse, expand them to 1 per observation
+    offsets = hdf5.interpolate_offsets(offsets, len(c.data))
+    
+    delta = int((timedelta(seconds=1)/target_freq).total_seconds()*1000)
+    new_timestamps = np.arange(0, offsets[-1], delta)
+    
+    for channel in channels:
+        # Yields a function that can be called with a new timestamp value
+        func = interp1d(offsets, channel.data)
+
+        # func is a function, so we just give it new hypothetical offsets
+        new_data = func(new_timestamps)
+
+        # when resampling a binary data channel we want to change any value > 0 to 1, and so preserve its binary nature.
+        if channel.binary_data:
+            indices = np.where(new_data>0)[0]
+            for i in indices:
+                new_data[i] = 1
+
+        channel.start = start
+        channel.cached_indices = {}
+        channel.set_contents(new_data, new_timestamps, timestamp_policy="offset")
+        channel.frequency = target_freq

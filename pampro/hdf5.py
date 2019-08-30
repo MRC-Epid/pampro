@@ -302,7 +302,7 @@ def interpolate_offsets(offsets, data_length):
         except:
             pass
 
-    return full_offsets
+    return full_offse
 
 
 def save(ts, output_filename, file_header=None, groups=[("Raw", ["X", "Y", "Z"])], meta_candidates=["calibrated", "frequency", "missing_value"], compression=4, data_type="float32"):
