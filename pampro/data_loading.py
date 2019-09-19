@@ -438,6 +438,15 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
     elif source_type == "activPAL_CSV":
 
+        file_handle = open(source, "r")
+        first_lines = []
+        for i in range(0,5):
+            s = file_handle.readline().strip()
+            first_lines.append(s)
+                
+        string = first_lines[2].replace('"', '')
+        header["device"] = string.split(": ")[1]       
+        
         ap_timestamp, ap_x, ap_y, ap_z = np.loadtxt(source, delimiter=',', unpack=True, skiprows=5, 
                                                     dtype={'names': ('ap_timestamp', 'ap_x', 'ap_y', 'ap_z'),
                                                            'formats': ('S16', 'f8', 'f8', 'f8')})
