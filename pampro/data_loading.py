@@ -442,9 +442,6 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
                                                     dtype={'names': ('ap_timestamp', 'ap_x', 'ap_y', 'ap_z'),
                                                            'formats': ('S16', 'f8', 'f8', 'f8')})
         
-        #ap_timestamp, ap_x, ap_y, ap_z = np.genfromtxt(source, delimiter=',',unpack=True, skip_header=5, dtype=str)
-        
-        
         dt = datetime.strptime("30-Dec-1899", "%d-%b-%Y")
 
         ap_timestamps = []
@@ -465,16 +462,21 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
         x = Channel("X")
         y = Channel("Y")
         z = Channel("Z")
+        integrity_channel = Channel("Integrity")
 
         ap_x = (ap_x - 128.0) / 64.0
         ap_y = (ap_y - 128.0) / 64.0
         ap_z = (ap_z - 128.0) / 64.0
 
+        integrity = np.zeros(len(ap_timestamps))
         x.set_contents(np.array(ap_x, dtype=np.float64), ap_timestamps)
         y.set_contents(np.array(ap_y, dtype=np.float64), ap_timestamps)
         z.set_contents(np.array(ap_z, dtype=np.float64), ap_timestamps)
         # print("C")
-        channels = [x, y, z]
+        integrity_channel.set_contents(integrity, ap_timestamps)
+        integrity_channel.binary_data = True
+        
+        channels = [x, y, z, integrity_channel]
 
     elif source_type == "activPAL":
 
@@ -1074,7 +1076,7 @@ def load(source, source_type="infer", datetime_format="%d/%m/%Y %H:%M:%S:%f", da
 
         for c in [channel_x, channel_y, channel_z, channel_integrity]:
             c.indices = axivity_indices
-            c.frequency = file_header["frequency"]
+            c.frequency = round(approximate_frequency, 2)
 
         channels = [channel_x, channel_y, channel_z, channel_temperature, channel_battery, channel_light,
                     channel_integrity]

@@ -228,7 +228,7 @@ class Time_Series(object):
         for i in range(0,len(channel_sources[0].data)):
 
             pretty_timestamp = channel_sources[0].timestamps[i].strftime(timestamp_format)
-            file_output.write(self.name + "," + pretty_timestamp + ",")
+            file_output.write("{},{},".format(self.name, pretty_timestamp))
 
             for n,chan in enumerate(channel_sources):
 

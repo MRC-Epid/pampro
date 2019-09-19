@@ -1141,7 +1141,7 @@ def resample_normal_channels(channels, target_freq):
     
                               
 def resample_sparse_channels(channels, target_freq):
-    """ Function to resample a list of spoarsley-timestamped data channels which share a timestamps array to a target frequency,
+    """ Function to resample a list of sparsley-timestamped data channels which share a timestamps array to a target frequency,
      and convert to offset timestamps """
     
     c = channels[0]
