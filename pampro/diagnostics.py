@@ -353,7 +353,7 @@ def fix_anomaly(anomaly_def, channels, expected_timestamps, missing_value=-111, 
 
     for channel in channels:
         if channel.name == "Integrity":
-            pass
+            channel.missing_value = "None"
         else:
             channel.missing_value = missing_value
             

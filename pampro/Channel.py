@@ -366,6 +366,7 @@ class Channel(object):
         return index
 
     def get_offset_data_index(self, datetimestamp):
+        """ Returns the indices of the data array to use if it is timestamped with offsets """
 
         start_index = (datetimestamp - self.time_period[0])/timedelta(microseconds=1000)
 
