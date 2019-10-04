@@ -51,7 +51,7 @@ def convert_axivity_light(value):
     return 10**power
 
 
-# conversion of 'temperature' value from raw Axivity file to degrees C
+# conversion of 'temperature' value from raw Axivity file to degrees C NOTE: this conversion may be incorrect - awaiting communication from OpenMovement Oct19
 def convert_axivity_temp(value):
     factor = int(value)-171
     return factor/3.413
