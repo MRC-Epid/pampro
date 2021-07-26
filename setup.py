@@ -13,7 +13,7 @@ from setuptools import setup
 setup(
     name="pampro",
     packages=["pampro"],
-    version="0.5.2",
+    version="0.5.2.1",
     author="Philip Cameron",
     author_email="philip.cameron@mrc-epid.cam.ac.uk",
     maintainer="Philip Cameron",
