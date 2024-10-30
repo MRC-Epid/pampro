@@ -21,7 +21,7 @@ setup(
     license="GNU GPL-3.0",
     description=("physical activity monitor processing"),
     url="https://github.com/MRC-Epid/pampro",
-    install_requires=['numpy>=1.14.0', 'scipy>=1.1.0', 'matplotlib>=2.2.2', 'h5py>=2.9.0', 'pandas>==0.23.0', 'statsmodels>=0.9.0', 'uos_activpal>=0.2.2', 'numba>=0.45'],
+    install_requires=['numpy>=1.14.0', 'scipy>=1.1.0', 'matplotlib>=2.2.2', 'h5py>=2.9.0', 'pandas>=0.23.0', 'statsmodels>=0.9.0', 'uos_activpal>=0.2.2', 'numba>=0.45'],
     Classifiers=[
         "Intended Audience :: Science/Research",
         "Operating System :: Microsoft :: Windows :: Windows 7",
